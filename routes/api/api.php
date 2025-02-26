@@ -1,0 +1,6 @@
+<?php
+
+use Illuminate\Support\Facades\Route;
+
+require base_path('routes/api/user.php');
+require base_path('routes/api/auth.php');
