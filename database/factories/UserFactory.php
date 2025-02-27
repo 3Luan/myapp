@@ -23,13 +23,12 @@ class UserFactory extends Factory
     public function definition(): array
     {
         return [
-            'name' =>"Kim Trọng",
-            'pic' => $this->faker->imageUrl(),
-            'email' =>"tgmail.com",
-            'phone' => "328256789",
-            'gender' =>"male",
-            'role' =>"admin",
-            'password' => bcrypt('123'),
+            'name' => $this->faker->name(),
+            'email' => $this->faker->unique()->safeEmail(),
+            'phone' => $this->faker->phoneNumber(),
+            'role_id' => Role::inRandomOrder()->first()->id,
+            'password' => bcrypt('password'),
         ];
     }
+
 }

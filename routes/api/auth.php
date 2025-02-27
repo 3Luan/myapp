@@ -8,6 +8,6 @@ Route::get('/login', [AuthController::class, 'showError'])->name('login');
 
 Route::post('/auth/login', [AuthController::class, 'login'])->name('api.login');
 
-// Route::post('/auth/refresh', [AuthController::class, 'refresh'])->name('api.refresh');
+Route::post('/auth/register', [AuthController::class, 'register'])->name('api.register');
 
 Route::middleware('auth:sanctum')->get('/auth/getProfile', [AuthController::class, 'getProfile']);
