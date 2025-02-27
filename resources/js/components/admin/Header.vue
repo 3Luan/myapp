@@ -1,24 +1,24 @@
 <template>
     <nav class="navbar navbar-expand-lg navbar-dark bg-dark px-5">
-        <a class="navbar-brand" href="#">Header</a>
+        <a class="navbar-brand" href="#">Navbar</a>
         <div class="text-white">
-            MyApp
+            <h5>{{ $store.getters["auth/user"]?.name}} - {{ $store.getters["auth/user"]?.role.name}}</h5>
         </div>
 
-        <!-- <button 
+        <button 
             type="button" 
             class="btn btn-secondary btn-xl" 
             @click="logout">
             Logout
-        </button> -->
+        </button>
     </nav>
 </template>
 
 <script setup>
-import store from '../store';
+import store from '../../store';
 
-// const logout = () => {
-//     store.dispatch("auth/logout");
-// };
+const logout = () => {
+    store.dispatch("auth/logout");
+};
 
 </script>

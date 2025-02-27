@@ -1,9 +1,10 @@
 import { createRouter, createWebHistory } from "vue-router";
 import admin from "./admin";
+import user from "./user";
 import store from "../store";
 
 const routes = [
-    ...admin
+    ...admin, ...user
 ];
 
 const router = createRouter({

@@ -1,7 +1,6 @@
 import axios from "axios";
-import api from "../../api/axios";
 import router from "../../routes";
-import { getProfileAPI, loginAPI } from "../../api/auth";
+import authApi from "../../api/auth";
 
 const state = () => ({
     user: JSON.parse(localStorage.getItem("user")) || null,
@@ -13,7 +12,6 @@ const mutations = {
     SET_TOKEN_USER(state, data) {
         state.token = data.token;
         state.user = data.user;
-        console.log("data", data);
 
         localStorage.setItem("token", data.token);
 
@@ -35,7 +33,7 @@ const mutations = {
 const actions = {
     async login({ commit }, credentials) {
         try {
-            const response = await loginAPI(credentials);
+            const response = await authApi.login(credentials);
             commit("SET_TOKEN_USER", response.data);
 
             return response.data;
@@ -48,7 +46,7 @@ const actions = {
     async getProfile({ commit, state }) {
         if (!state.token) return;
         try {
-            const response = await getProfileAPI();
+            const response = await authApi.getProfile();
 
             commit("SET_USER", response.data);
         } catch (error) {
