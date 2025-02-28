@@ -7,17 +7,19 @@ const admin = [
                 path: "users",
                 name: "admin-users",
                 component: () => import("../pages/admin/users/index.vue"),
-                meta: { requiresAuth: true }
+                meta: { requiresAuth: true, isAdmin: true },
             },
             {
                 path: "roles",
                 name: "admin-roles",
-                component: () => import("../pages/admin/roles/index.vue")
+                component: () => import("../pages/admin/roles/index.vue"),
+                meta: { requiresAuth: true, isAdmin: true },
             },
             {
                 path: "settings",
                 name: "admin-settings",
-                component: () => import("../pages/admin/settings/index.vue")
+                component: () => import("../pages/admin/settings/index.vue"),
+                meta: { requiresAuth: true, isAdmin: true },
             }
         ]
     },

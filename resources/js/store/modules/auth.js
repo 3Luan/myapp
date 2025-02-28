@@ -3,13 +3,13 @@ import router from "../../routes";
 import authApi from "../../api/auth";
 
 const state = () => ({
-    user: JSON.parse(localStorage.getItem("user")) || null,
+    user: null,
     token: localStorage.getItem("token") || null,
 });
 
 // mutations
 const mutations = {
-    SET_TOKEN_USER(state, data) {
+    SET_TOKEN(state, data) {
         state.token = data.token;
         state.user = data.user;
 
@@ -25,7 +25,7 @@ const mutations = {
         state.token = null;
         localStorage.removeItem("token");
         delete axios.defaults.headers.common["Authorization"];
-        router.push("/admin/login");
+        router.push("/login");
     },
 };
 
@@ -34,12 +34,12 @@ const actions = {
     async login({ commit }, credentials) {
         try {
             const response = await authApi.login(credentials);
-            commit("SET_TOKEN_USER", response.data);
-
+            commit("SET_TOKEN", response.data);
+            router.push("/");
             return response.data;
         } catch (error) {
             console.log(error);
-            throw new Error("Login failed! Please check your credentials.");
+            throw new Error(error.response.data.message);
         }
     },
 
@@ -47,7 +47,6 @@ const actions = {
         if (!state.token) return;
         try {
             const response = await authApi.getProfile();
-
             commit("SET_USER", response.data);
         } catch (error) {
             console.log(error);

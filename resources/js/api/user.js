@@ -1,17 +1,17 @@
-import api from "./axios"
+import { apiAdmin } from "./axios";
 
 
 class UserApi {
     getUsers = (params) => {
-        return api.get("/users", { params: params });
+        return apiAdmin.get("/users", { params: params });
     }
 
     getUserById = (id) => {
-        return api.get(`/user/${id}`);
+        return apiAdmin.get(`/user/${id}`);
     }
 }
 
-const userApi = new UserApi;
+const userApi = new UserApi();
 
 export default userApi;
 

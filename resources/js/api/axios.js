@@ -1,6 +1,21 @@
 import axios from "axios";
 
-const token = localStorage.getItem('token');
+const apiAdmin = axios.create({
+    baseURL: "http://localhost:8000/api",
+    headers: {
+        "Content-Type": "application/json",
+    },
+});
+
+apiAdmin.interceptors.request.use((config) => {
+    const token = localStorage.getItem('token_admin');
+    if (token) {
+        config.headers.Authorization = `Bearer ${token}`;
+    }
+    return config;
+}, (error) => {
+    return Promise.reject(error);
+});
 
 const api = axios.create({
     baseURL: "http://localhost:8000/api",
@@ -19,4 +34,4 @@ api.interceptors.request.use((config) => {
     return Promise.reject(error);
 });
 
-export default api;
+export { api, apiAdmin };

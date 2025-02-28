@@ -5,20 +5,20 @@
             MyApp
         </div>
 
-        <!-- <button 
+        <button 
             type="button" 
             class="btn btn-secondary btn-xl" 
             @click="logout">
             Logout
-        </button> -->
+        </button>
     </nav>
 </template>
 
 <script setup>
 import store from '../store';
 
-// const logout = () => {
-//     store.dispatch("auth/logout");
-// };
+const logout = () => {
+    store.dispatch("auth/logout");
+};
 
 </script>

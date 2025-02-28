@@ -9,6 +9,8 @@ import axios from 'axios';
 import { Button, Drawer, message, Menu, List } from 'ant-design-vue';
 import store from './store/index.js';
 import Antd from 'ant-design-vue'
+import ToastPlugin from 'vue-toast-notification';
+import 'vue-toast-notification/dist/theme-bootstrap.css';
 
 window.axios = axios;
 
@@ -20,6 +22,7 @@ app.use(Menu);
 app.use(List);
 app.use(store);
 app.use(Antd)
+app.use(ToastPlugin);
 app.mount("#app");
 
 app.config.globalProperties.$message = message;

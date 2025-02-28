@@ -1,16 +1,24 @@
 <template>
-    <router-view>
-    </router-view>
+  <router-view>
+  </router-view>
 </template>
-<script>
-import { mapActions } from "vuex";
 
-export default {
-  methods: {
-    ...mapActions("auth", ["getProfile"]),
-  },
-  created() {
-    this.getProfile();
-  },
+<!-- <script setup>
+import { onMounted } from "vue";
+import { useStore } from "vuex";
+
+const store = useStore(); // Lấy store
+
+const getProfile = async () => {
+try {
+  await store.dispatch("authAdmin/getProfileAdmin");
+} catch (error) {
+  console.error("Error fetching profile:", error);
+}
 };
-</script>
+
+onMounted(() => {
+getProfile();
+});
+</script> -->
+

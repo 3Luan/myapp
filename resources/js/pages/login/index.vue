@@ -1,8 +1,8 @@
 <template>
-  <div class="login-container">
-    <div class="login-form">
-      <h3 class="text-center mb-4">Login Admin</h3>
-      <form @submit.prevent="loginUser">
+  <div class="register-container">
+    <div class="register-form">
+      <h3 class="text-center mb-4">Login</h3>
+      <form @submit.prevent="registerUser">
         <div class="form-group">
           <label for="email">Email</label>
           <input
@@ -25,10 +25,9 @@
             required
           />
         </div>
-
         <div class="d-flex justify-content-between">
-          <button type="submit" class="btn btn-primary btn-lg w-100" :disabled="loading">
-            {{ loading ? "Logging in..." : "Login" }}
+          <button type="submit" class="btn btn-primary btn-lg w-100" :disabled="isLoading" @click="handelLogin">
+            {{ isLoading ? "Loading..." : "Login" }}
           </button>
         </div>
 
@@ -39,38 +38,36 @@
 </template>
 
 <script setup>
-import { ref } from "vue";
-import { useRouter } from "vue-router";
-import { useStore } from "vuex";
+import { ref } from 'vue';
+import { useStore } from 'vuex';
+import authApi from '../../api/auth';
 
-const email = ref("admin@gmail.com");
-const password = ref("123");
-const loading = ref(false);
+const isLoading = ref(false);
 const errorMessage = ref("");
-const router = useRouter();
+const email = ref('');
+const password = ref('');
 const store = useStore();
 
-const loginUser = async () => {
-  loading.value = true;
-  errorMessage.value = "";
-  try {
-    await store.dispatch("authAdmin/loginAdmin", { 
-      email: email.value, 
-      password: password.value 
-    });
-  } catch (error) {
-    console.log("error", error);
-    
-    errorMessage.value = error.message || "Login failed";
-  } finally {
-    loading.value = false;
-  }
+const handelLogin = async () => {
+    isLoading.value = true;
+    errorMessage.value = "";
+    try {
+        await store.dispatch("auth/login", {
+            email: email.value,
+            password: password.value
+        });
+    } catch (error) {
+      errorMessage.value = error;
+    } finally {
+        isLoading.value = false;
+    }
 };
+
 </script>
 
 
 <style scoped>
-.login-container {
+.register-container {
   display: flex;
   justify-content: center;
   align-items: center;
@@ -78,7 +75,7 @@ const loginUser = async () => {
   background: linear-gradient(135deg, #ffffff, #ffffff);
 }
 
-.login-form {
+.register-form {
   background-color: #fff;
   padding: 30px;
   border-radius: 10px;
