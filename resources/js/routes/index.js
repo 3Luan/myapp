@@ -16,10 +16,6 @@ router.beforeEach(async (to, from, next) => {
     const token_admin = localStorage.getItem("token_admin");
     const token_user = localStorage.getItem("token");
 
-    console.log(token_admin);
-    console.log(token_user);
-
-
     // ADMIN
     if ((token_admin || token_admin !== "undefined") && !store.getters["authAdmin/admin"]) {
         try {

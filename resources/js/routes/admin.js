@@ -16,11 +16,11 @@ const admin = [
                 meta: { requiresAuth: true, isAdmin: true },
             },
             {
-                path: "settings",
-                name: "admin-settings",
-                component: () => import("../pages/admin/settings/index.vue"),
+                path: "products",
+                name: "admin-products",
+                component: () => import("../pages/admin/products/index.vue"),
                 meta: { requiresAuth: true, isAdmin: true },
-            }
+            },
         ]
     },
     {

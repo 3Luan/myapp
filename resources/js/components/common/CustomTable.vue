@@ -69,6 +69,7 @@ const paginatedData = computed(() => {
 
     return props.data.sort((a, b) => {
         if (!orderElement.value) return 0;
+        
         const valA = a[orderElement.value];
         const valB = b[orderElement.value];
 

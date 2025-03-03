@@ -80,9 +80,6 @@ const fetchUsers = async () => {
             filters: filters.value
         });
 
-        console.log("response",response);
-        
-
         users.value = response.data.data;
         pagination.value.total = response.data.total;
     } catch (error) {
