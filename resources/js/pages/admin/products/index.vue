@@ -11,8 +11,40 @@
             />
             
             <!-- Add Product Button -->
-            <a-button type="primary" @click="showAddModal">+</a-button>
+            <a-button type="primary" @click="showAddModal">
+                <PlusOutlined/>
+            </a-button>
+
+            <!-- Export Product Button -->
+            <a-button type="primary" @click="exportData">
+                <ExportOutlined/> Export 
+            </a-button>
+
+            <!-- Import Product Button -->
+            <a-upload
+                :before-upload="handleBeforeUpload"
+                :show-upload-list="false"
+                accept=".csv"
+            >
+                <a-button type="primary">
+                    <ImportOutlined/> Import
+                </a-button>
+            </a-upload>
         </div>
+
+        <!-- Modal xác nhận import -->
+        <a-modal
+            v-model:visible="isImportModalVisible"
+            title="Import Products"
+            @ok="handleImportConfirm"
+            @cancel="resetImport"
+        >
+            <div v-if="uploadProgress > 0">
+                <a-progress :percent="uploadProgress" status="active" />
+            </div>
+            <p v-if="selectedFile">Selected file: {{ selectedFile.name }}</p>
+            <p v-else>Please select a CSV file to import</p>
+        </a-modal>
 
         <a-spin :spinning="isLoading" tip="Loading...">
             <div class="table-wrapper">
@@ -50,7 +82,7 @@
 <script setup>
 import { h, ref, onMounted } from 'vue';
 import { message } from "ant-design-vue";
-import { EditOutlined, DeleteOutlined } from "@ant-design/icons-vue";
+import { EditOutlined, DeleteOutlined, PlusOutlined, ExportOutlined, ImportOutlined } from "@ant-design/icons-vue";
 import productApi from '../../../api/product';
 import AddProductModal from '../../../components/modals/AddProductModal.vue';
 import UpdateProductModal from '../../../components/modals/UpdateProductModal.vue';
@@ -66,11 +98,17 @@ const isUpdateModalOpen = ref(false);
 const resetForm = ref(false);
 const productDetails = ref("");
 
+const isImportModalVisible = ref(false);
+const selectedFile = ref(null);
+const uploadProgress = ref(0);
+
 const columns = [
     { title: "ID", dataIndex: "id", key: "id", sorter: true },
     { 
-        title: "Image", dataIndex: "image", key: "image", sorter: true,
-        customRender: ({ record }) => h('img', { src: `/storage/${record.image}`, width: "85px" })
+        title: "Image", dataIndex: "images", key: "images", sorter: true,
+        customRender: ({ record }) => {
+            return h('img', { src: `/storage/${record.images[0].path}`, width: "85px" })
+        }
     },
     { title: "Name", dataIndex: "name", key: "name", sorter: true },
     { title: "Price", dataIndex: "price", key: "price", sorter: true },
@@ -92,6 +130,98 @@ const columns = [
         ]
     }
 ];
+
+const exportData = async () => {
+    try {
+        isLoading.value = true;
+
+        const response = await productApi.getAllProducts();
+        const products = response.data;
+
+        if (!products.length) {
+            message.warning("Không có sản phẩm để xuất.");
+            return;
+        }
+
+        let csvContent = "data:text/csv;charset=utf-8,";
+        csvContent += "ID,Name,Price,Rate,Count,Description,Image\n";
+
+        products.forEach(product => {
+            csvContent += `${product.id},${product.name},${product.price},${product.rate},${product.count},${product.description},${product?.images[0]?.path || null}\n`;
+        });
+
+        const encodedUri = encodeURI(csvContent);
+        const link = document.createElement("a");
+        link.setAttribute("href", encodedUri);
+        link.setAttribute("download", "products.csv");
+        document.body.appendChild(link);
+        link.click();
+
+        message.success("Export file CSV success!");
+    } catch (error) {
+        console.error("Error:", error);
+        message.error("Failed to export product");
+    } finally {
+        isLoading.value = false;
+    }
+};
+
+const handleBeforeUpload = (file) => {
+    selectedFile.value = file;
+    isImportModalVisible.value = true;
+    uploadProgress.value = 0;
+    return false;
+};
+
+
+const handleImportConfirm = async () => {
+    if (!selectedFile.value) {
+        message.error("Please select a file first");
+        return;
+    }
+
+    try {
+        isLoading.value = true;
+        let formData = new FormData();
+        formData.append("file", selectedFile.value);
+
+        await productApi.import(formData);
+
+        message.success("Products imported successfully!");
+        resetImport();
+        fetchProducts();
+    } catch (error) {
+        console.error("Error:", error);
+        message.error("Failed to import product");
+    } finally {
+        isLoading.value = false;
+    }
+};
+
+
+const resetImport = () => {
+    selectedFile.value = null;
+    isImportModalVisible.value = false;
+};
+
+const importData = async (file) => {
+    try {
+        isLoading.value = true;
+        let formData = new FormData();
+
+        formData.append("file", file);
+        const response = await productApi.import(formData);
+        console.log("response",response);
+
+    } catch (error) {
+        console.error("Error:", error);
+        message.error("Failed to import product");
+    } finally {
+        isLoading.value = false;
+    }
+};
+
+
 
 const handleDetails =  async (record) =>{
     showUpdateModal();
@@ -133,6 +263,72 @@ const fetchProducts = async () => {
     }
 };
 
+const handleAddProduct = async (data) => {
+    if (!data.name || !data.price) {
+        message.error("Please fill all required fields");
+        return;
+    }
+    console.log("data.image",data);
+
+    let formData = new FormData();
+    formData.append("name", data.name);
+    formData.append("price", data.price);
+    formData.append("images", data.images);
+    formData.append("description", data.description);
+
+    data.images.forEach((image) => {
+        formData.append("images[]", image);
+    });
+
+    try {
+        await productApi.addProduct(formData);
+        message.success("Product added successfully!");
+        isAddModalVisible.value = false;
+        resetForm.value = true;
+        
+        fetchProducts();
+    } catch (error) {
+        console.error("Error", error);
+        message.error("Failed to add product");
+    }
+};
+
+const handleUpdateProduct = async (data, idDeleteList, id) => {
+    if (!data.name || !data.price) {
+        message.error("Please fill all required fields");
+        return;
+    }
+
+    let formData = new FormData();
+    formData.append("name", data.name);
+    formData.append("price", data.price);
+    formData.append("description", data.description);
+    data.images.forEach((image) => {
+        if(image.file){
+            formData.append("images[]", image.file);
+        }
+    });
+
+    if (idDeleteList.length > 0) {
+        idDeleteList.forEach((idDeleteId) => {
+            formData.append("idDeleteId[]", idDeleteId);
+        });
+    } else {
+        formData.append("idDeleteId[]", []);
+    }
+
+    try {
+        await productApi.update(formData, id);
+        message.success("Product update successfully!");
+        isUpdateModalOpen.value = false;
+        
+        fetchProducts();
+    } catch (error) {
+        console.error("Error", error);
+        message.error("Failed to update product");
+    }
+};
+
 const handleSearch = async () => {
     pagination.value.current = 1;
     fetchProducts();
@@ -153,57 +349,6 @@ const showAddModal = () => {
 
 const showUpdateModal = () => {
     isUpdateModalOpen.value = true;
-};
-
-const handleAddProduct = async (data) => {
-    if (!data.name || !data.price) {
-        message.error("Please fill all required fields");
-        return;
-    }
-
-    let formData = new FormData();
-    formData.append("name", data.name);
-    formData.append("price", data.price);
-    formData.append("image", data.image);
-    formData.append("description", data.description);
-
-    try {
-        await productApi.addProduct(formData);
-        message.success("Product added successfully!");
-        isAddModalVisible.value = false;
-        resetForm.value = true;
-        
-        fetchProducts();
-    } catch (error) {
-        console.error("Error", error);
-        message.error("Failed to add product");
-    }
-};
-
-const handleUpdateProduct = async (data, id) => {
-    if (!data.name || !data.price) {
-        message.error("Please fill all required fields");
-        return;
-    }
-
-    let formData = new FormData();
-    formData.append("name", data.name);
-    formData.append("price", data.price);
-    formData.append("description", data.description);
-    if(data.image){
-        formData.append("image", data.image);
-    }
-
-    try {
-        await productApi.update(formData, id);
-        message.success("Product update successfully!");
-        isUpdateModalOpen.value = false;
-        
-        fetchProducts();
-    } catch (error) {
-        console.error("Error", error);
-        message.error("Failed to update product");
-    }
 };
 
 onMounted(() => {

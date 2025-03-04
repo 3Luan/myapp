@@ -49,6 +49,11 @@ class User extends Authenticatable
         return $this->belongsTo(Role::class);
     }
 
+    public function files()
+    {
+        return $this->hasMany(File::class);
+    }
+
     public function hasPermission($permission)
     {
         return $this->role->permissions()->where('name', $permission)->exists();

@@ -8,6 +8,10 @@ Route::middleware('auth:sanctum')->group(function() {
 });
 
 Route::middleware('auth:sanctum')->group(function() {
+    Route::get('/allProducts', [ProductController::class, 'getAllProducts']);
+});
+
+Route::middleware('auth:sanctum')->group(function() {
     Route::post('/product/add', [ProductController::class, 'addProduct']);
 });
 
@@ -21,4 +25,8 @@ Route::middleware('auth:sanctum')->group(function() {
 
 Route::middleware('auth:sanctum')->group(function() {
     Route::delete('/product/{id}', [ProductController::class, 'delete']);
+});
+
+Route::middleware('auth:sanctum')->group(function() {
+    Route::post('/import', [ProductController::class, 'importProduct']);
 });

@@ -6,6 +6,10 @@ class ProductApi {
         return apiAdmin.get("/products", { params: params });
     }
 
+    getAllProducts = () => {
+        return apiAdmin.get("/allProducts");
+    }
+
     addProduct = (formData) => {
         return apiAdmin.post("/product/add", formData, {
             headers: {
@@ -29,6 +33,15 @@ class ProductApi {
     delete = (id) => {
         return apiAdmin.delete(`/product/${id}`);
     }
+
+    import = (formData) => {
+        return apiAdmin.post(`/import`, formData, {
+            headers: {
+                "Content-Type": "multipart/form-data",
+            },
+        });
+    }
+
 }
 
 const productApi = new ProductApi();
