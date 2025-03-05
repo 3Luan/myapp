@@ -30,6 +30,15 @@
                     <ImportOutlined/> Import
                 </a-button>
             </a-upload>
+
+            <a-button 
+                v-if="selectedRowKeys.length > 0"
+                danger
+                type="primary"
+                @click="handleBulkDelete"
+            >
+                <DeleteOutlined/> Delete Selected
+            </a-button>
         </div>
 
         <!-- Modal xác nhận import -->
@@ -40,11 +49,12 @@
             @cancel="resetImport"
         >
             <div v-if="uploadProgress > 0">
-                <a-progress :percent="uploadProgress" status="active" />
+                <a-progress :percent="uploadProgress" :status="uploadProgress === 100 ? 'success' : 'active'" />
             </div>
             <p v-if="selectedFile">Selected file: {{ selectedFile.name }}</p>
             <p v-else>Please select a CSV file to import</p>
         </a-modal>
+
 
         <a-spin :spinning="isLoading" tip="Loading...">
             <div class="table-wrapper">
@@ -57,6 +67,7 @@
                     bordered
                     :scroll="{ y: '55vh' }"
                     @change="handleTableChange"
+                    :row-selection="rowSelection"
                 />
             </div>
         </a-spin>
@@ -81,7 +92,7 @@
 
 <script setup>
 import { h, ref, onMounted } from 'vue';
-import { message } from "ant-design-vue";
+import { message, Modal } from "ant-design-vue";
 import { EditOutlined, DeleteOutlined, PlusOutlined, ExportOutlined, ImportOutlined } from "@ant-design/icons-vue";
 import productApi from '../../../api/product';
 import AddProductModal from '../../../components/modals/AddProductModal.vue';
@@ -101,13 +112,14 @@ const productDetails = ref("");
 const isImportModalVisible = ref(false);
 const selectedFile = ref(null);
 const uploadProgress = ref(0);
+const selectedRowKeys = ref([]);
 
 const columns = [
     { title: "ID", dataIndex: "id", key: "id", sorter: true },
     { 
         title: "Image", dataIndex: "images", key: "images", sorter: true,
         customRender: ({ record }) => {
-            return h('img', { src: `/storage/${record.images[0].path}`, width: "85px" })
+            return h('img', { src: `/storage/${record?.images[0]?.path}`, width: "85px" })
         }
     },
     { title: "Name", dataIndex: "name", key: "name", sorter: true },
@@ -130,6 +142,52 @@ const columns = [
         ]
     }
 ];
+
+const rowSelection = {
+    selectedRowKeys,
+    onChange: (selectedKeys) => {
+        console.log("selectedKeys",selectedKeys);
+        
+        selectedRowKeys.value = selectedKeys;
+    }
+};
+
+const handleBulkDelete = async () => {
+    console.log(selectedRowKeys.value.length);
+    
+    if (selectedRowKeys.value.length === 0) {
+        message.warning("Please select at least one product to delete");
+        return;
+    }
+
+    Modal.confirm({
+        title: 'Are you sure?',
+        content: `Do you want to delete ${selectedRowKeys.value.length} selected product(s)?`,
+        async onOk() {
+            try {
+                isLoading.value = true;
+
+                const ids = [...selectedRowKeys.value];
+                await productApi.delete({ids: ids});
+                
+                product.value = product.value.filter(
+                    item => !selectedRowKeys.value.includes(item.id)
+                );
+                message.success("Selected products deleted successfully!");
+                selectedRowKeys.value = [];
+                fetchProducts();
+            } catch (error) {
+                console.error("Error:", error);
+                message.error("Failed to delete selected products");
+            } finally {
+                isLoading.value = false;
+            }
+        },
+        onCancel() {
+            // Do nothing
+        },
+    });
+};
 
 const exportData = async () => {
     try {
@@ -185,7 +243,20 @@ const handleImportConfirm = async () => {
         let formData = new FormData();
         formData.append("file", selectedFile.value);
 
-        await productApi.import(formData);
+        const config = {
+            headers: {
+                "Content-Type": "multipart/form-data",
+            },
+            onUploadProgress: e => {
+                if (e.lengthComputable) {
+                    let percentCompleted = Math.round((e.loaded * 100) / e.total);
+                    console.log(`Upload progress: ${percentCompleted}%`);
+                    uploadProgress.value = percentCompleted;
+                }
+            }
+        };
+
+        await productApi.import(formData, config);
 
         message.success("Products imported successfully!");
         resetImport();
@@ -198,30 +269,10 @@ const handleImportConfirm = async () => {
     }
 };
 
-
 const resetImport = () => {
     selectedFile.value = null;
     isImportModalVisible.value = false;
 };
-
-const importData = async (file) => {
-    try {
-        isLoading.value = true;
-        let formData = new FormData();
-
-        formData.append("file", file);
-        const response = await productApi.import(formData);
-        console.log("response",response);
-
-    } catch (error) {
-        console.error("Error:", error);
-        message.error("Failed to import product");
-    } finally {
-        isLoading.value = false;
-    }
-};
-
-
 
 const handleDetails =  async (record) =>{
     showUpdateModal();
@@ -229,18 +280,21 @@ const handleDetails =  async (record) =>{
     productDetails.value = res.data
 }
 
-const handleDelete =  async (id) =>{
+const handleDelete = async (id) => {
     try {
         isLoading.value = true;
-        await productApi.delete(id);
+        
+        await productApi.delete({ids:[id]});
         product.value = product.value.filter(item => item.id !== id);
+        selectedRowKeys.value = selectedRowKeys.value.filter(key => key !== id);
+        message.success("Product deleted successfully!");
     } catch (error) {
         console.error("Error:", error);
         message.error("Failed to delete product");
     } finally {
         isLoading.value = false;
     }
-}
+};
 
 const fetchProducts = async () => {
     isLoading.value = true;

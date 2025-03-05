@@ -11,37 +11,27 @@ class User extends Authenticatable
 {
     use HasApiTokens, HasFactory, Notifiable;
 
-    /**
-     * Các thuộc tính có thể được gán hàng loạt.
-     *
-     * @var array<int, string>
-     */
     protected $fillable = [
         'name',
         'email',
         'phone',
+        'pic',
         'password',
-        'role_id'
+        'role_id',
+        'email_verified',
+        'is_locked',
     ];
 
-    /**
-     * Các thuộc tính cần ẩn khi serialize.
-     *
-     * @var array<int, string>
-     */
     protected $hidden = [
         'password',
     ];
 
-    /**
-     * Các thuộc tính cần ép kiểu.
-     *
-     * @var array<string, string>
-     */
     protected $casts = [
         'created_at' => 'datetime',
         'updated_at' => 'datetime',
         'password' => 'hashed',
+        'email_verified' => 'boolean',
+        'is_locked' => 'boolean',
     ];
 
     public function role()

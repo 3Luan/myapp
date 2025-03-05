@@ -4,6 +4,11 @@ namespace App\Providers;
 
 use Illuminate\Support\ServiceProvider;
 
+use App\Models\Role;
+use App\Policies\RolePolicy;
+use App\Models\Product;
+use App\Policies\ProductPolicy;
+
 class AppServiceProvider extends ServiceProvider
 {
     /**
@@ -13,6 +18,12 @@ class AppServiceProvider extends ServiceProvider
     {
         //
     }
+
+    protected $policies = [
+        Role::class => RolePolicy::class,
+        Product::class => ProductPolicy::class,
+        User::class => UserPolicy::class,
+    ];
 
     /**
      * Bootstrap any application services.

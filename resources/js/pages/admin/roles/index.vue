@@ -1,5 +1,6 @@
 <template>
-    <a-card title="Role Management" style="width: 100%; height: 86vh;">
+    <Forbidden v-if="isForbidden" />
+    <a-card v-else title="Role Management" style="width: 100%; height: 86vh;">
         <div class="mb-4 flex items-center justify-between">
             <!-- Search -->
             <form @submit.prevent="handleSearch">
@@ -45,6 +46,7 @@ import { ButtonType } from "../../../constants/index.js";
 import CustomInput from '../../../components/common/CustomInput.vue';
 import { useToast } from 'vue-toast-notification';
 import 'vue-toast-notification/dist/theme-sugar.css';
+import Forbidden from '../../../components/Forbidden.vue';
 
 const roles = ref([]);
 const isLoading = ref(false);
@@ -54,7 +56,7 @@ const orderElement = ref('name');
 const orderType = ref('asc');
 const $toast = useToast();
 const nameRole = ref("");
-// const pagination = ref({ pageSize: 5 });
+const isForbidden = ref(false);
 
 const columns = [
     { title: "ID", dataIndex: "id", key: "id", sorter: true },
@@ -92,6 +94,11 @@ const fetchRoles = async () => {
         roles.value = response.data.data;
         pagination.value.total = response.data.total;
     } catch (error) {
+        if (error?.response?.status === 403) {
+            isForbidden.value = true; // Chuyển sang trang 403
+            return;
+        }
+        $toast.error(error?.response?.data?.message || "Lỗi");
         console.error("Error:", error);
     } finally {
         isLoading.value = false;
@@ -125,14 +132,16 @@ const addRole = async () => {
         $toast.success(response.data.message);
     } catch (error) {
         console.error("Error:", error);
-        $toast.error(error.response.data.message);
+        $toast.error(error?.response?.data?.message || "Lỗi");
     } finally {
         isLoading.value = false;
     }
 };
 
+// Gọi API khi component được mount
 fetchRoles();
 </script>
+
 
 <style scoped>
 .flex {

@@ -209,19 +209,36 @@ class ProductController extends Controller
         ], 201);
     }
 
-    public function delete($id)
+    public function destroy(Request $request)
     {
-        $product = Product::find($id);
-        if (!$product) {
-            return response()->json([
-                'message' => 'Product not found'
-            ], 404);
+        try {
+            $ids = $request->input('ids');
+            
+            if (!is_array($ids) || empty($ids)) {
+                return response()->json(['message' => 'No IDs provided for deletion'], 400);
+            }
+
+            Product::whereIn('id', $ids)->delete();
+            
+            return response()->json(['message' => 'Products deleted successfully'], 200);
+        } catch (\Exception $e) {
+            return response()->json(['message' => 'Failed to delete products', 'error' => $e->getMessage()], 500);
         }
-
-        $product->delete();
-
-        return response()->json([
-            'message' => 'Product delete successfully',
-        ], 200);
     }
+
+    // public function delete($id)
+    // {
+    //     $product = Product::find($id);
+    //     if (!$product) {
+    //         return response()->json([
+    //             'message' => 'Product not found'
+    //         ], 404);
+    //     }
+
+    //     $product->delete();
+
+    //     return response()->json([
+    //         'message' => 'Product delete successfully',
+    //     ], 200);
+    // }
 }

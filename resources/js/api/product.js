@@ -30,17 +30,18 @@ class ProductApi {
         });
     }
 
-    delete = (id) => {
-        return apiAdmin.delete(`/product/${id}`);
+    delete = (ids) => {
+        return apiAdmin.post(`/product`, ids);
     }
 
-    import = (formData) => {
+    import = (formData, config = {}) => {
         return apiAdmin.post(`/import`, formData, {
             headers: {
                 "Content-Type": "multipart/form-data",
             },
+            ...config,
         });
-    }
+    };
 
 }
 

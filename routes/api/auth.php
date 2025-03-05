@@ -14,6 +14,6 @@ Route::middleware('auth:sanctum')->get('/auth/getProfile', [AuthController::clas
 
 /////////////////// Admin ///////////////////
 
-Route::post('/auth/loginAdmin', [AuthController::class, 'loginAdmin'])->name('api.loginAdmin');
+Route::post('/auth/loginAdmin', [AuthController::class, 'loginAdmin'])->name('api.loginAdmin')->middleware('check.locked');
 
 Route::middleware('auth:sanctum')->get('/auth/getProfileAdmin', [AuthController::class, 'getProfileAdmin']);

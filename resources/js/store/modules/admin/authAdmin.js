@@ -40,7 +40,7 @@ const actions = {
             return response.data;
         } catch (error) {
             console.log(error);
-            throw new Error("Login failed! Please check your credentials.");
+            throw new Error(error?.response?.data?.message);
         }
     },
 
@@ -48,6 +48,7 @@ const actions = {
         if (!state.token) return;
         try {
             const response = await authApi.getProfileAdmin();
+
             commit("SET_ADMIN", response.data);
         } catch (error) {
             console.log(error);

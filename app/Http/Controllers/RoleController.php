@@ -6,6 +6,7 @@ use App\Models\User;
 use App\Models\Role;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Validator;
 
 class RoleController extends Controller
 {
@@ -17,38 +18,31 @@ class RoleController extends Controller
         $order_element = $request->query('order_element', 'id');
         $order_type = $request->query('order_type', 'asc');
 
-        // Tìm User
         $query = Role::query();
 
-        // Tìm kiếm
         if (!empty($search)) {
             $query->where('name', 'like', "%{$search}%");
         }
-        
-        // Kiểm tra nếu `order_element` hợp lệ
+
         if (in_array($order_element, ['id', 'name'])) {
             $query->orderBy($order_element, $order_type);
         }
 
-        // Phân trang
         $roles = $query->paginate($limit, ['*'], 'page', $currentPage);
 
         return response()->json($roles);
     }
 
     public function addRole(Request $request)
-    {
-        if($request->name == ""){
-            return response()->json([
-                'message' => 'Name role not found'
-            ], 401);
-        }
+    {        
+        $validator = Validator::make($request->all(), [
+            'name' => 'required|string|max:255|unique:roles,name'
+        ]);
 
-        // Kiểm tra role
-        if (Role::where('name', $request->name)->exists()) {
+        if ($validator->fails()) {
             return response()->json([
-                'message' => 'Role already exists'
-            ], 409);
+                'message' => $validator->errors()->first()
+            ], 422);
         }
 
         $role = Role::create([
@@ -60,5 +54,4 @@ class RoleController extends Controller
             'role' => $role
         ], 201);
     }
-
 }

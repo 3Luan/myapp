@@ -1,5 +1,6 @@
 <template>
-    <a-card title="Account Management" style="width: 100%; height: 86vh;">
+    <Forbidden v-if="isForbidden" />
+    <a-card v-else title="Account Management" style="width: 100%; height: 86vh;">
         <div class="mb-4 flex items-center justify-between">
             <!-- Search -->
             <a-input-search 
@@ -32,6 +33,8 @@
 import { h, ref } from 'vue';
 import userApi from '../../../api/user';
 import { EditOutlined, DeleteOutlined } from "@ant-design/icons-vue";
+import { useToast } from 'vue-toast-notification';
+import Forbidden from '../../../components/Forbidden.vue';
 
 const users = ref([]);
 const isLoading = ref(false);
@@ -40,6 +43,8 @@ const pagination = ref({ current: 1, pageSize: 10, total: 0 });
 const orderElement = ref('name');
 const orderType = ref('asc');
 const filters = ref({ role: [], gender: [] });
+const $toast = useToast();
+const isForbidden = ref(false);
 
 const columns = [
     { title: "ID", dataIndex: "id", key: "id", sorter: true },
@@ -83,7 +88,12 @@ const fetchUsers = async () => {
         users.value = response.data.data;
         pagination.value.total = response.data.total;
     } catch (error) {
+        if (error?.response?.status === 403) {
+            isForbidden.value = true; // Chuyển sang trang 403
+            return;
+        }
         console.error("Error fetching users:", error);
+        $toast.error(error?.response?.data?.message || "Lỗi");
     } finally {
         isLoading.value = false;
     }

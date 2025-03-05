@@ -5,9 +5,12 @@ use Illuminate\Support\Facades\Auth;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 
 class AuthController extends Controller
 {
+    use AuthorizesRequests;
+
     public function showError()
     {
         return response()->json(['message' => 'Invalid credentials'], 401);
@@ -55,6 +58,10 @@ class AuthController extends Controller
             return response()->json(['message' => 'Invalid credentials'], 401);
         }
 
+        if ($user->is_locked) {
+            return response()->json(['message' => 'Your account is locked.'], 403);
+        }
+
         $token = $user->createToken('auth_token')->plainTextToken;
 
         return response()->json([
@@ -92,8 +99,17 @@ class AuthController extends Controller
         $user = User::with('role')->where('email', $request->email)->first();
 
         // Kiểm tra mật khẩu
-        if (! $user || ! \Hash::check($request->password, $user->password)) {
+        if (!$user || !\Hash::check($request->password, $user->password)) {
             return response()->json(['message' => 'Invalid credentials'], 401);
+        }
+
+        if ($user->is_locked) {
+            return response()->json(['message' => 'Your account is locked.'], 403);
+        }
+
+        // Kiểm tra quyền admin
+        if ($user->role->name === 'member') {
+            return response()->json(['message' => 'Access denied'], 403);
         }
 
         $token = $user->createToken('auth_token')->plainTextToken;
@@ -104,6 +120,7 @@ class AuthController extends Controller
             'user' => $user
         ]);
     }
+
 
     public function getProfileAdmin(Request $request)
     {

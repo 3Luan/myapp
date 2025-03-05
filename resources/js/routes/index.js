@@ -2,9 +2,11 @@ import { createRouter, createWebHistory } from "vue-router";
 import admin from "./admin";
 import user from "./user";
 import store from "../store";
+import NotFound from "../components/NotFound.vue";
 
 const routes = [
-    ...admin, ...user
+    ...admin, ...user,
+    { path: "/:pathMatch(.*)*", name: "NotFound", component: NotFound }
 ];
 
 const router = createRouter({
@@ -55,5 +57,6 @@ router.beforeEach(async (to, from, next) => {
         next();
     }
 });
+
 
 export default router;
