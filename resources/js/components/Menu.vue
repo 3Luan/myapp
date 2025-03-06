@@ -13,6 +13,10 @@
                 <router-link :to="{ name: 'admin-products' }" />
                 Products
             </a-menu-item>
+            <a-menu-item key="admin-orders">
+                <router-link :to="{ name: 'admin-orders' }" />
+                Orders
+            </a-menu-item>
         </a-menu>
     </div>
 </template>
@@ -32,6 +36,8 @@ export default defineComponent({
                 return ['admin-roles'];
             } else if (route.name === 'admin-products') {
                 return ['admin-products'];
+            } else if (route.name === 'admin-orders') {
+                return ['admin-orders'];
             }
             return [];
         });

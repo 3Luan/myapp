@@ -9,6 +9,12 @@ const admin = [
                 component: () => import("../pages/home/index.vue"),
                 meta: { requiresAuth: true, isAdmin: false },
             },
+            {
+                path: "/history",
+                name: "history",
+                component: () => import("../pages/history/index.vue"),
+                meta: { requiresAuth: true, isAdmin: false },
+            },
         ]
     },
     {

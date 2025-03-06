@@ -21,6 +21,12 @@ const admin = [
                 component: () => import("../pages/admin/products/index.vue"),
                 meta: { requiresAuth: true, isAdmin: true },
             },
+            {
+                path: "orders",
+                name: "admin-orders",
+                component: () => import("../pages/admin/order/index.vue"),
+                meta: { requiresAuth: true, isAdmin: true },
+            },
         ]
     },
     {
