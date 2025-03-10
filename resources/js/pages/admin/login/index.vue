@@ -40,14 +40,12 @@
 
 <script setup>
 import { ref } from "vue";
-import { useRouter } from "vue-router";
 import { useStore } from "vuex";
 
 const email = ref("admin@gmail.com");
 const password = ref("123");
 const loading = ref(false);
 const errorMessage = ref("");
-const router = useRouter();
 const store = useStore();
 
 const loginUser = async () => {
@@ -60,7 +58,6 @@ const loginUser = async () => {
     });
   } catch (error) {
     console.log("error", error);
-    
     errorMessage.value = error.message || "Login failed";
   } finally {
     loading.value = false;

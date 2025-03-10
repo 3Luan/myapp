@@ -27,13 +27,13 @@ class ProductController extends Controller
         $order_element = $request->query('order_element', 'id');
         $order_type = $request->query('order_type', 'asc');
 
-        $query = Product::with('images'); // Lấy danh sách ảnh
+        $query = Product::with('images');
 
         if (!empty($search)) {
             $query->where('name', 'like', "%{$search}%");
         }
         
-        if (in_array($order_element, ['id', 'name'])) {
+        if (in_array($order_element, ['id', 'name', 'price'])) {
             $query->orderBy($order_element, $order_type);
         }
 
@@ -59,7 +59,7 @@ class ProductController extends Controller
 
         if ($request->hasFile('images')) {
             foreach ($request->file('images') as $image) {
-                if ($image->isValid()) { // Kiểm tra ảnh hợp lệ
+                if ($image->isValid()) { // check image
                     $imagePath = $image->store('images', 'public');
                     Image::create([
                         'product_id' => $product->id,
@@ -90,8 +90,6 @@ class ProductController extends Controller
         if (!$product) {
             return response()->json(['message' => 'Product not found'], 404);
         }
-
-        Log::info("Cập nhật sản phẩm: ", ['idDeleteId' => $request->idDeleteId]);
 
         $request->validate([
             'name' => 'required|string|max:255',
@@ -140,14 +138,17 @@ class ProductController extends Controller
 
     public function importProduct(Request $request)
     {
+        // check file upload
         if (!$request->hasFile('file')) {
             return response()->json(['error' => 'No file uploaded'], 400);
         }
 
         $file = $request->file('file');
 
+        // save file
         $filePath = $file->store('uploads', 'public');
 
+        // save file in database
         $savedFile = File::create([
             'user_id'   => auth()->id(),
             'name'      => $file->getClientOriginalName(),
@@ -158,49 +159,55 @@ class ProductController extends Controller
             'visibility' => 'public',
         ]);
 
-        // Đọc file CSV
-        $csvData = array_map('str_getcsv', file(storage_path("app/public/" . $filePath)));
-        $header = array_map('trim', $csvData[0]);
-        unset($csvData[0]); // Xóa dòng tiêu đề
+        // read file CSV
+        $csvContent = Storage::disk('public')->get($filePath);
+        $csvData = array_map('str_getcsv', explode("\n", trim($csvContent)));
+        $header = array_map('trim', array_shift($csvData));
 
         $products = [];
 
-        foreach ($csvData as $row) {
-            $row = array_combine($header, $row);
-
-            $validator = Validator::make($row, [
-                'Name'  => 'required|string|max:255',
-                'Price' => 'required|numeric',
-            ]);
-
-            if ($validator->fails()) {
-                continue;
-            }
-
-            $product = new Product();
-            $product->name = $row['Name'];
-            $product->price = $row['Price'];
-            $product->rate = $row['Rate'] ?? 0;
-            $product->count = $row['Count'] ?? 0;
-            $product->description = $row['Description'] ?? null;
-            $product->save();
-
-            if (!empty($row['Image'])) {
-                $imagePath = trim($row['Image']);
-
-                if (Storage::disk('public')->exists($imagePath)) {
-                    $image = new Image();
-                    $image->product_id = $product->id;
-                    $image->name = basename($imagePath);
-                    $image->path = $imagePath;
-                    $image->size = Storage::disk('public')->size($imagePath);
-                    $image->format = pathinfo($imagePath, PATHINFO_EXTENSION);
-                    $image->save();
+        Product::getConnectionResolver()->transaction(function () use ($header, $csvData, &$products) {
+            foreach ($csvData as $row) {
+                if (empty(array_filter($row))) {
+                    continue;
                 }
-            }
 
-            $products[] = $product->load('images');
-        }
+                $row = array_combine($header, array_pad($row, count($header), null));
+
+                // Validate data
+                $validator = Validator::make($row, [
+                    'Name'  => 'required|string|max:255',
+                    'Price' => 'required|numeric',
+                ]);
+
+                if ($validator->fails()) {
+                    continue;
+                }
+
+                // Create product
+                $product = Product::create([
+                    'name'        => $row['Name'],
+                    'price'       => $row['Price'],
+                    'rate'        => $row['Rate'] ?? 0,
+                    'count'       => $row['Count'] ?? 0,
+                    'description' => $row['Description'] ?? null,
+                ]);
+
+                if (!empty($row['Image'])) {
+                    $imagePath = trim($row['Image']);
+                    if (Storage::disk('public')->exists($imagePath)) {
+                        $product->images()->create([
+                            'name'   => basename($imagePath),
+                            'path'   => $imagePath,
+                            'size'   => Storage::disk('public')->size($imagePath),
+                            'format' => pathinfo($imagePath, PATHINFO_EXTENSION),
+                        ]);
+                    }
+                }
+
+                $products[] = $product->load('images');
+            }
+        });
 
         return response()->json([
             'message'  => 'Products imported successfully',
@@ -225,20 +232,4 @@ class ProductController extends Controller
             return response()->json(['message' => 'Failed to delete products', 'error' => $e->getMessage()], 500);
         }
     }
-
-    // public function delete($id)
-    // {
-    //     $product = Product::find($id);
-    //     if (!$product) {
-    //         return response()->json([
-    //             'message' => 'Product not found'
-    //         ], 404);
-    //     }
-
-    //     $product->delete();
-
-    //     return response()->json([
-    //         'message' => 'Product delete successfully',
-    //     ], 200);
-    // }
 }

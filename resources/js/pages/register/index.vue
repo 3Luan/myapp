@@ -63,7 +63,7 @@
 import { ref } from 'vue';
 import { useStore } from 'vuex';
 import { useRouter } from 'vue-router';
-import authApi from '../../api/auth';
+import authApi from '@/api/auth';
 
 const isLoading = ref(false);
 const errorMessage = ref("");
@@ -87,13 +87,11 @@ const handelRegister = async () => {
 
         console.log("response", response);
 
-        // Gọi action `login` trong Vuex
         await store.dispatch("auth/login", {
             email: email.value,
             password: password.value
         });
 
-        // Chuyển hướng đến trang admin
         router.push("/");
     } catch (error) {
       errorMessage.value = error;

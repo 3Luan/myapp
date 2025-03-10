@@ -26,7 +26,7 @@ class UserController extends Controller
 
         $query = User::with('role');
 
-        // Tìm theo name, email
+        // Find name, email
         if (!empty($search)) {
             $query->where(function ($q) use ($search) {
                 $q->where('name', 'like', "%{$search}%")
@@ -38,10 +38,8 @@ class UserController extends Controller
             $query->orderBy($order_element, $order_type);
         }
 
-        // Phân trang
+        // pagination
         $users = $query->paginate($limit, ['*'], 'page', $currentPage);
-
-        Log::info('User:', $users->toArray());
 
         return response()->json($users);
     }

@@ -38,7 +38,7 @@
 </template>
 
 <script setup>
-import { ref, defineProps, defineEmits, watch } from "vue";
+import { ref, defineProps, watch } from "vue";
 import { PlusOutlined } from "@ant-design/icons-vue";
 
 const props = defineProps({
@@ -66,14 +66,14 @@ watch(
       productData.value = { ...newData };
       productData.value.images = newData.images || [];
 
-      // Cập nhật fileList để hiển thị ảnh cũ
+      // Update fileList to show old photos
       fileList.value = newData.images
         ? newData.images.map((img, index) => ({
             id: img.id,
-            uid: `old-${index}`, // Đánh dấu là ảnh cũ
+            uid: `old-${index}`, // Mark as old photo
             name: img.name || `image-${index}`,
             status: "done",
-            url: `/storage/${img.path}`, // Đường dẫn ảnh
+            url: `/storage/${img.path}`,
           }))
         : [];
 
@@ -104,7 +104,7 @@ const handleFileUpload = (file) => {
       uid: file.uid || `new-${Date.now()}`,
       name: file.name,
       status: "done",
-      url: e.target.result, // Hiển thị ảnh mới
+      url: e.target.result,
       file: file,
     });
   };

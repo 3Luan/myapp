@@ -37,7 +37,7 @@
 </template>
 
 <script setup>
-import { ref, defineProps, defineEmits, watch } from "vue";
+import { ref, defineProps, watch } from "vue";
 import { PlusOutlined } from "@ant-design/icons-vue";
 
 const props = defineProps({

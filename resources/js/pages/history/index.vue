@@ -1,10 +1,10 @@
 <template>
   <div class="order-history-container">
     <header class="header">
-      <h1>Lịch sử đơn hàng</h1>
+      <h1>History Order</h1>
       <a-input-search
         v-model:value="searchText"
-        placeholder="Tìm kiếm đơn hàng..."
+        placeholder="Search..."
         size="large"
         :loading="isSearching"
         @search="handleSearch"
@@ -12,7 +12,7 @@
       />
     </header>
 
-    <a-spin :spinning="isLoading" tip="Đang tải dữ liệu...">
+    <a-spin :spinning="isLoading" tip="Loading...">
       <a-table
         :columns="columns"
         :data-source="orders"
@@ -27,48 +27,37 @@
           </a-tag>
         </template>
         <template #action="{ record }">
-        <div style="display: flex; gap: 8px;">
-          <a-button type="primary" @click="viewOrderDetail(record)">
-            Chi tiết
-          </a-button>
-          <a-button
-            v-if="record.state === 'pending'"
-            type="primary"
-            danger
-            style="width: 80px"
-            @click="cancelOrder(record.id)"
-          >
-            Hủy
-          </a-button>
-        </div>
-      </template>
+          <div style="display: flex; gap: 8px;">
+            <a-button type="primary" @click="viewOrderDetail(record)">
+              Chi tiết
+            </a-button>
+            <a-button
+              v-if="record.state === 'pending'"
+              type="primary"
+              danger
+              style="width: 80px"
+              @click="cancelOrder(record.id)"
+            >
+              Hủy
+            </a-button>
+          </div>
+        </template>
       </a-table>
     </a-spin>
 
-    <a-modal v-model:open="modalVisible" title="Chi tiết đơn hàng" width="600px" :footer="null">
-      <div v-if="selectedOrder">
-        <a-descriptions :column="1" bordered>
-          <a-descriptions-item label="Mã đơn hàng">{{ selectedOrder.id }}</a-descriptions-item>
-          <a-descriptions-item label="Ngày đặt">{{ formatDate(selectedOrder.created_at) }}</a-descriptions-item>
-          <a-descriptions-item label="Tổng tiền">{{ formatPrice(selectedOrder.price) }}</a-descriptions-item>
-          <a-descriptions-item label="Trạng thái">
-            <a-tag :color="getStateColor(selectedOrder.state)">
-              {{ selectedOrder.state }}
-            </a-tag>
-          </a-descriptions-item>
-        </a-descriptions>
-
-        <h3>Danh sách sản phẩm</h3>
-        <a-table :columns="itemColumns" :data-source="selectedOrder.order_details" :pagination="false" row-key="id" />
-      </div>
-    </a-modal>
+    <OrderDetailModal
+      :open="modalVisible"
+      :selected-order="selectedOrder"
+      @update:open="modalVisible = $event"
+    />
   </div>
 </template>
 
 <script setup>
 import { ref, onMounted } from 'vue';
 import { message } from 'ant-design-vue';
-import orderApi from '../../api/order';
+import orderApi from '@/api/order';
+import OrderDetailModal from '@/components/modals/OrderDetailModal.vue';
 
 const searchText = ref('');
 const isLoading = ref(false);
@@ -80,25 +69,11 @@ const modalVisible = ref(false);
 const pagination = ref({ current: 1, pageSize: 10, total: 0 });
 
 const columns = [
-  { title: 'Mã đơn', dataIndex: 'id', key: 'id', width: 120 },
-  { title: 'Ngày đặt', dataIndex: 'created_at', key: 'created_at', width: 150, customRender: ({ text }) => formatDate(text) },
-  { title: 'Tổng tiền', dataIndex: 'price', key: 'price', width: 150, customRender: ({ text }) => formatPrice(text) },
-  { title: 'Trạng thái', key: 'state', width: 120, slots: { customRender: 'state' } },
-  { title: 'Hành động', key: 'action', width: 120, slots: { customRender: 'action' } }
-];
-
-const itemColumns = [
-  { 
-    title: 'Tên sản phẩm', 
-    key: 'name', 
-    customRender: ({ record }) => record.product ? record.product.name : 'N/A'
-  },
-  { 
-    title: 'Đơn giá', 
-    key: 'price', 
-    customRender: ({ record }) => record.product ? formatPrice(record.product.price) : 'N/A'
-  },
-  { title: 'Số lượng', dataIndex: 'count', key: 'count' }
+  { title: 'ID', dataIndex: 'id', key: 'id', width: 120 },
+  { title: 'Order date', dataIndex: 'created_at', key: 'created_at', width: 150, customRender: ({ text }) => formatDate(text) },
+  { title: 'Total price', dataIndex: 'price', key: 'price', width: 150, customRender: ({ text }) => formatPrice(text) },
+  { title: 'State', key: 'state', width: 120, slots: { customRender: 'state' } },
+  { title: 'Action', key: 'action', width: 120, slots: { customRender: 'action' } }
 ];
 
 const fetchOrders = async () => {
@@ -114,7 +89,7 @@ const fetchOrders = async () => {
     pagination.value.total = response.data.total;
   } catch (error) {
     console.error(error);
-    message.error('Không thể tải đơn hàng');
+    message.error('Unable to load order');
   } finally {
     isLoading.value = false;
   }
@@ -138,14 +113,13 @@ const viewOrderDetail = (order) => {
   modalVisible.value = true;
 };
 
-
 const cancelOrder = async (orderId) => {
   try {
-    await orderApi.updateState("canceled",orderId);
-    message.success("Đơn hàng đã được hủy!");
+    await orderApi.updateState("canceled", orderId);
+    message.success("Order has been cancelled!");
     fetchOrders();
   } catch (error) {
-    message.error("Không thể hủy đơn hàng!");
+    message.error("Order cannot be cancelled!");
     console.error(error);
   }
 };
@@ -162,7 +136,9 @@ const formatDate = (date) => {
   return new Intl.DateTimeFormat('vi-VN', { year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date(date));
 };
 
-onMounted(fetchOrders);
+onMounted(() => {
+  fetchOrders();
+});
 </script>
 
 <style scoped>

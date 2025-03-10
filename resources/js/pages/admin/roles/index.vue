@@ -37,16 +37,16 @@
 </template>
 
 <script setup>
-import { h, ref } from 'vue';
+import { h, onMounted, ref } from 'vue';
 import { EditOutlined, DeleteOutlined, SearchOutlined, PlusOutlined } from "@ant-design/icons-vue";
-import roleApi from '../../../api/role';
-import CustomTable from "../../../components/common/CustomTable.vue"; 
-import CustomButton from "../../../components/common/CustomButton.vue";
-import { ButtonType } from "../../../constants/index.js";
-import CustomInput from '../../../components/common/CustomInput.vue';
+import roleApi from '@/api/role';
+import CustomTable from "@/components/common/CustomTable.vue"; 
+import CustomButton from "@/components/common/CustomButton.vue";
+import { ButtonType } from "@/constants/index.js";
+import CustomInput from '@/components/common/CustomInput.vue';
 import { useToast } from 'vue-toast-notification';
 import 'vue-toast-notification/dist/theme-sugar.css';
-import Forbidden from '../../../components/Forbidden.vue';
+import Forbidden from '@/components/Forbidden.vue';
 
 const roles = ref([]);
 const isLoading = ref(false);
@@ -95,7 +95,7 @@ const fetchRoles = async () => {
         pagination.value.total = response.data.total;
     } catch (error) {
         if (error?.response?.status === 403) {
-            isForbidden.value = true; // Chuyển sang trang 403
+            isForbidden.value = true;
             return;
         }
         $toast.error(error?.response?.data?.message || "Lỗi");
@@ -138,8 +138,9 @@ const addRole = async () => {
     }
 };
 
-// Gọi API khi component được mount
-fetchRoles();
+onMounted(() => {
+    fetchRoles();
+});
 </script>
 
 

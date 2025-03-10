@@ -20,54 +20,46 @@ class OrderController extends Controller
             'products.*.count' => 'required|integer|min:1',
         ]);
 
-        DB::beginTransaction(); // Bắt đầu transaction để đảm bảo dữ liệu đồng bộ
-
         try {
-            $totalPrice = 0;
-            $orderDetails = [];
+            $order = Order::getConnectionResolver()->transaction(function () use ($validated) {
+                $totalPrice = 0;
+                $orderDetails = [];
 
-            foreach ($validated['products'] as $item) {
-                $product = Product::lockForUpdate()->find($item['product_id']); // Khóa sản phẩm tránh lỗi race condition
+                foreach ($validated['products'] as $item) {
+                    $product = Product::lockForUpdate()->find($item['product_id']);
 
-                // Kiểm tra sản phẩm có đủ số lượng không
-                if ($product->count < $item['count']) {
-                    DB::rollBack(); // Hoàn tác nếu có lỗi
-                    return response()->json([
-                        'message' => "Product {$product->name} does not have enough stock.",
-                    ], 400);
+                    // Check count
+                    if ($product->count < $item['count']) {
+                        throw new \Exception("Product {$product->name} does not have enough stock.");
+                    }
+
+                    $totalPrice += $product->price * $item['count'];
+                    $product->decrement('count', $item['count']);
+
+                    $orderDetails[] = new OrderDetail([
+                        'product_id' => $product->id,
+                        'count' => $item['count'],
+                    ]);
                 }
 
-                // Tính tổng tiền
-                $totalPrice += $product->price * $item['count'];
-
-                // Giảm số lượng sản phẩm
-                $product->decrement('count', $item['count']);
-
-                // Lưu chi tiết đơn hàng
-                $orderDetails[] = new OrderDetail([
-                    'product_id' => $product->id,
-                    'count' => $item['count'],
+                // Create
+                $order = Order::create([
+                    'user_id' => auth()->id(),
+                    'price' => $totalPrice,
+                    'state' => 'pending',
                 ]);
-            }
 
-            // Tạo đơn hàng
-            $order = Order::create([
-                'user_id' => auth()->id(), // Hoặc `$request->user_id` nếu gửi từ frontend
-                'price' => $totalPrice,
-                'state' => 'pending',
-            ]);
+                // Save order details
+                $order->orderDetails()->saveMany($orderDetails);
 
-            // Lưu chi tiết đơn hàng vào đơn
-            $order->orderDetails()->saveMany($orderDetails);
-
-            DB::commit(); // Lưu thay đổi
+                return $order;
+            });
 
             return response()->json([
-                'message' => 'Order successful',
+                'message' => 'Success',
                 'order' => $order->load('orderDetails'),
             ], 201);
         } catch (\Exception $e) {
-            DB::rollBack(); // Hoàn tác nếu có lỗi
             return response()->json([
                 'message' => 'Order failed',
                 'error' => $e->getMessage(),
@@ -80,7 +72,6 @@ class OrderController extends Controller
         $search = $request->query('search');
         $currentPage = $request->query('currentPage', 1);
         $limit = $request->query('limit', 10);
-        
         $orderElement = $request->query('order_element', 'updated_at');
         $orderType = $request->query('order_type', 'desc');
 
@@ -104,44 +95,39 @@ class OrderController extends Controller
         $order = Order::find($id);
 
         if (!$order) {
-            return response()->json(['message' => 'Đơn hàng không tồn tại'], 404);
+            return response()->json(['message' => 'Order does not exist'], 404);
         }
 
         $state = $request->input('state');
 
         $validStates = ['pending', 'processing', 'completed', 'canceled'];
         if (!in_array($state, $validStates)) {
-            return response()->json(['message' => 'Trạng thái không hợp lệ'], 400);
+            return response()->json(['message' => 'Invalid state'], 400);
         }
 
-        // Kiểm tra quy tắc cập nhật trạng thái
+        // check update state
         if ($order->state === 'processing' && $state === 'canceled') {
-            return response()->json(['message' => 'Không thể hủy đơn hàng khi đang xử lý'], 400);
+            return response()->json(['message' => 'Cannot cancel orders while they are being processed.'], 400);
         }
 
         if ($order->state === 'completed') {
-            return response()->json(['message' => 'Không thể thay đổi trạng thái khi đơn hàng đã hoàn thành'], 400);
+            return response()->json(['message' => 'Cannot change status once order is completed'], 400);
         }
 
         if ($order->state === 'canceled') {
-            return response()->json(['message' => 'Không thể thay đổi trạng thái khi đơn hàng đã bị hủy'], 400);
+            return response()->json(['message' => 'Cannot change status once order has been cancelled'], 400);
         }
 
         if ($order->state === 'pending' && $state === 'completed') {
-            return response()->json(['message' => 'Không thể thay đổi trạng thái'], 400);
+            return response()->json(['message' => 'Cannot change status'], 400);
         }
 
-        // Cập nhật trạng thái hợp lệ
         $order->state = $state;
         $order->save();
 
         return response()->json([
-            'message' => 'Cập nhật trạng thái thành công',
+            'message' => 'Success',
             'order' => $order
         ]);
     }
-
-
-
-
 }

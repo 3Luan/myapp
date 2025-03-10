@@ -1,151 +1,189 @@
 <template>
     <a-layout-header class="header">
-        <!-- Logo với hiệu ứng hover -->
-        <div class="logo-wrapper">
-            <router-link to="/" class="logo">MyApp</router-link>
-        </div>
-
-        <!-- Menu chính -->
-    
-
-        <!-- User Dropdown và Logout -->
-        <a-dropdown>
-            <a-button type="primary" class="user-button">
-                <UserOutlined />
-                <span class="user-text">Hi, {{ admin?.name }}</span>
-                <DownOutlined />
-            </a-button>
-            <template #overlay>
-                <a-menu theme="dark" >
-                    <a-menu-item key="cart">
-                        <router-link to="/cart">
-                            <ShoppingCartOutlined class="menu-icon" />
-                            <span class="menu-text">Cart</span>
-                            <a-badge
-                                :count="cartCount"
-                                :number-style="{ backgroundColor: '#ff4d4f' }"
-                                offset="[10, 0]"
-                            />
-                        </router-link>
-                    </a-menu-item>
-
-                    <a-menu-item key="history">
-                        <router-link to="/history">
-                            <HistoryOutlined class="menu-icon" />
-                            <span class="menu-text">Purchase History</span>
-                        </router-link>
-                    </a-menu-item>
-
-                    <a-menu-item key="logout" @click="logout">
-                        <LogoutOutlined />
-                        <span>Logout</span>
-                    </a-menu-item>
-                </a-menu>
-            </template>
-        </a-dropdown>
+      <div class="logo-wrapper">
+        <router-link to="/" class="logo">MyApp</router-link>
+      </div>
+  
+      <!-- Cart and Purchase History -->
+      <div class="nav-actions">
+        <router-link to="/cart" class="nav-item">
+          <ShoppingCartOutlined class="nav-icon" />
+          <span class="nav-text">Cart</span>
+          <a-badge
+            :count="cartCount"
+            :number-style="{ backgroundColor: '#ff4d4f', fontSize: '12px' }"
+            :offset="[10, 0]"
+          />
+        </router-link>
+  
+        <router-link to="/history" class="nav-item">
+          <HistoryOutlined class="nav-icon" />
+          <span class="nav-text">Purchase History</span>
+        </router-link>
+      </div>
+  
+      <!-- User Dropdown-->
+      <a-dropdown>
+        <a-button type="primary" class="user-button">
+          <UserOutlined />
+          <span class="user-text">Hi, {{ admin?.name }}</span>
+          <DownOutlined />
+        </a-button>
+        <template #overlay>
+          <a-menu theme="dark">
+            <a-menu-item key="logout" @click="logout">
+              <LogoutOutlined class="menu-icon" />
+              <span class="menu-text">Logout</span>
+            </a-menu-item>
+          </a-menu>
+        </template>
+      </a-dropdown>
     </a-layout-header>
-</template>
+  </template>
 
 <script setup>
-import { computed, ref } from "vue";
+import { computed, ref, watch } from "vue";
 import { useRouter } from "vue-router";
 import { ShoppingCartOutlined, HistoryOutlined, LogoutOutlined, UserOutlined, DownOutlined } from "@ant-design/icons-vue";
-import store from "../store";
+import store from "@/store";
 
-const admin = computed(() => store.getters["auth/user"]);
-
+const admin = computed(() => store.getters["auth/user"] || {});
 const router = useRouter();
-const cartCount = ref(1);
+const cartCount = computed(() => store.getters["cart/count"]);
 
 const logout = () => {
     store.dispatch("auth/logout");
     router.push("/login");
 };
+
 </script>
 
 <style scoped>
 .header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    background: linear-gradient(90deg, #001529 0%, #003a8c 100%); /* Gradient background */
-    padding: 0 30px;
-    height: 64px;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
-    position: sticky;
-    top: 0;
-    z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: linear-gradient(90deg, #001529 0%, #003a8c 100%);
+  padding: 0 40px;
+  height: 70px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+  position: sticky;
+  top: 0;
+  z-index: 1000;
 }
 
 .logo-wrapper {
-    display: flex;
-    align-items: center;
+  display: flex;
+  align-items: center;
 }
 
 .logo {
-    font-size: 24px;
-    font-weight: 700;
-    color: #fff;
-    text-decoration: none;
-    transition: all 0.3s ease;
+  font-size: 28px;
+  font-weight: 800;
+  color: #fff;
+  text-decoration: none;
+  letter-spacing: 1px;
+  transition: all 0.3s ease;
 }
 
 .logo:hover {
-    color: #40a9ff;
-    transform: scale(1.05); /* Hiệu ứng phóng to nhẹ khi hover */
+  color: #40c4ff;
+  transform: scale(1.05) rotate(2deg);
 }
 
-.menu {
-    flex: 1;
-    display: flex;
-    justify-content: center;
-    background: transparent;
-    border-bottom: none;
+.nav-actions {
+  display: flex;
+  align-items: center;
+  gap: 30px;
 }
 
-.menu :deep(.ant-menu-item) {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    padding: 0 20px;
-    border-radius: 4px;
-    transition: all 0.3s ease;
+.nav-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #fff;
+  text-decoration: none;
+  padding: 8px 16px;
+  border-radius: 20px;
+  transition: all 0.3s ease;
 }
 
-.menu :deep(.ant-menu-item:hover) {
-    background-color: rgba(255, 255, 255, 0.1);
+.nav-item:hover {
+  background-color: rgba(255, 255, 255, 0.15);
+  color: #40c4ff;
+  transform: translateY(-2px);
 }
 
-.menu-icon {
-    font-size: 16px;
+.nav-icon {
+  font-size: 18px;
 }
 
-.menu-text {
-    font-size: 14px;
-    font-weight: 500;
+.nav-text {
+  font-size: 14px;
+  font-weight: 500;
 }
 
+/* User Dropdown */
 .user-button {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    background-color: #1890ff;
-    border-color: #1890ff;
-    transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background-color: #1890ff;
+  border-color: #1890ff;
+  border-radius: 20px;
+  padding: 0 15px;
+  height: 40px;
+  transition: all 0.3s ease;
 }
 
 .user-button:hover {
-    background-color: #40a9ff;
-    border-color: #40a9ff;
-    transform: translateY(-2px); /* Hiệu ứng nâng lên khi hover */
+  background-color: #40a9ff;
+  border-color: #40a9ff;
+  transform: translateY(-2px);
 }
 
 .user-text {
-    font-size: 14px;
-    font-weight: 500;
+  font-size: 14px;
+  font-weight: 500;
 }
 
+/* Menu Dropdown */
+.menu-icon {
+  font-size: 16px;
+  margin-right: 8px;
+}
+
+.menu-text {
+  font-size: 14px;
+  font-weight: 500;
+}
+
+/* Badge */
 :deep(.ant-badge-count) {
-    box-shadow: 0 0 0 2px #001529; /* Viền xung quanh badge cho đẹp */
+  box-shadow: 0 0 0 2px #fff;
+  font-size: 12px;
+  height: 18px;
+  line-height: 18px;
+  min-width: 18px;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .header {
+    padding: 0 20px;
+    flex-wrap: wrap;
+    height: auto;
+    padding-top: 10px;
+    padding-bottom: 10px;
+  }
+  .nav-actions {
+    gap: 15px;
+  }
+  .nav-item {
+    padding: 6px 12px;
+  }
+  .user-button {
+    margin-left: auto;
+  }
 }
 </style>

@@ -14,9 +14,9 @@
   
   <script setup>
   import { computed } from 'vue';
-  import store from '../../store';
-  import CustomButton from "../../components/common/CustomButton.vue";
-  import { ButtonType } from "../../constants/index.js";
+  import store from '@/store';
+  import CustomButton from "@/components/common/CustomButton.vue";
+  import { ButtonType } from "@/constants/index.js";
   
   const admin = computed(() => store.getters["authAdmin/admin"]);
   

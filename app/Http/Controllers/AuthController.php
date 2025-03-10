@@ -18,7 +18,7 @@ class AuthController extends Controller
 
     public function register(Request $request)
     {
-        // Kiểm tra email
+        // check email
         if (User::where('email', $request->email)->exists()) {
             return response()->json([
                 'message' => 'Email already exists'
@@ -50,10 +50,10 @@ class AuthController extends Controller
             return response()->json(['message' => 'Email or Password not found'], 400);
         }
 
-        // Tìm user theo email
+        // Find user by email
         $user = User::with('role')->where('email', $request->email)->first();
 
-        // Kiểm tra mật khẩu
+        // check password
         if (! $user || ! \Hash::check($request->password, $user->password)) {
             return response()->json(['message' => 'Invalid credentials'], 401);
         }
@@ -73,7 +73,7 @@ class AuthController extends Controller
 
     public function getProfile(Request $request)
     {
-        // Lấy user từ request
+        // get user from request
         $user = $request->user()->load('role');
 
         if (!$user) {
@@ -95,10 +95,10 @@ class AuthController extends Controller
             return response()->json(['message' => 'Email or Password not found'], 400);
         }
 
-        // Tìm user theo email
+        // get user by email
         $user = User::with('role')->where('email', $request->email)->first();
 
-        // Kiểm tra mật khẩu
+        // check password
         if (!$user || !\Hash::check($request->password, $user->password)) {
             return response()->json(['message' => 'Invalid credentials'], 401);
         }
@@ -107,7 +107,7 @@ class AuthController extends Controller
             return response()->json(['message' => 'Your account is locked.'], 403);
         }
 
-        // Kiểm tra quyền admin
+        // check is admin
         if ($user->role->name === 'member') {
             return response()->json(['message' => 'Access denied'], 403);
         }
@@ -124,7 +124,7 @@ class AuthController extends Controller
 
     public function getProfileAdmin(Request $request)
     {
-        // Lấy user từ request
+        // get user by request
         $user = $request->user()->load('role');
 
         if (!$user) {

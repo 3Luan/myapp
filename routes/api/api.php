@@ -7,3 +7,4 @@ require base_path('routes/api/auth.php');
 require base_path('routes/api/role.php');
 require base_path('routes/api/product.php');
 require base_path('routes/api/order.php');
+require base_path('routes/api/cart.php');

@@ -1,5 +1,6 @@
 import axios from "axios";
 
+//////////////// Admin ////////////////
 const apiAdmin = axios.create({
     baseURL: "http://localhost:8000/api",
     headers: {
@@ -17,6 +18,8 @@ apiAdmin.interceptors.request.use((config) => {
     return Promise.reject(error);
 });
 
+
+//////////////// User ////////////////
 const api = axios.create({
     baseURL: "http://localhost:8000/api",
     headers: {

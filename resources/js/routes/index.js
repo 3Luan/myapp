@@ -40,12 +40,12 @@ router.beforeEach(async (to, from, next) => {
         }
     }
 
-    // Kiểm tra quyền truy cập
+    // Check access
     if (to.meta.requiresAuth) {
         if (to.meta.isAdmin && !store.getters["authAdmin/isAuthenticated"]) {
-            next("/admin/login"); // Nếu trang admin nhưng chưa đăng nhập admin
+            next("/admin/login"); // If admin page but not logged in admin
         } else if (!to.meta.isAdmin && !store.getters["auth/isAuthenticated"]) {
-            next("/login"); // Nếu trang user nhưng chưa đăng nhập user
+            next("/login"); // If the user page but not logged in user
         } else {
             next();
         }
@@ -55,6 +55,16 @@ router.beforeEach(async (to, from, next) => {
         next({ path: "/", replace: true });
     } else {
         next();
+    }
+
+    // Load data
+    // Load Cart
+    if (!store.getters["cart/cart"] && token_user) {
+        await store.dispatch("cart/getCarts", {
+          search: "",
+          currentPage: 1,
+          limit: 10
+        });
     }
 });
 

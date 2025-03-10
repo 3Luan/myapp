@@ -44,30 +44,20 @@
           </a-table>
       </a-spin>
 
-      <!-- Modal Chi tiết đơn hàng -->
-      <a-modal v-model:open="modalVisible" title="Chi tiết đơn hàng" width="600px" :footer="null">
-          <div v-if="selectedOrder">
-              <a-descriptions :column="1" bordered>
-                  <a-descriptions-item label="Mã đơn hàng">{{ selectedOrder.id }}</a-descriptions-item>
-                  <a-descriptions-item label="Ngày đặt">{{ formatDate(selectedOrder.created_at) }}</a-descriptions-item>
-                  <a-descriptions-item label="Tổng tiền">{{ formatPrice(selectedOrder.price) }}</a-descriptions-item>
-                  <a-descriptions-item label="Trạng thái">
-                      <a-tag :color="getStateColor(selectedOrder.state)">
-                          {{ selectedOrder.state }}
-                      </a-tag>
-                  </a-descriptions-item>
-              </a-descriptions>
-              <h3>Danh sách sản phẩm</h3>
-              <a-table :columns="itemColumns" :data-source="selectedOrder.order_details" :pagination="false" row-key="id" />
-          </div>
-      </a-modal>
+      <!-- Modal order details -->
+      <OrderDetailModal
+        :open="modalVisible"
+        :selected-order="selectedOrder"
+        @update:open="modalVisible = $event"
+      />
   </a-card>
 </template>
 
 <script setup>
 import { ref, onMounted } from 'vue';
 import { message } from "ant-design-vue";
-import orderApi from '../../../api/order';
+import orderApi from '@/api/order';
+import OrderDetailModal from '@/components/modals/OrderDetailModal.vue';
 
 const orders = ref([]);
 const isLoading = ref(false);
@@ -77,23 +67,17 @@ const modalVisible = ref(false);
 const selectedOrder = ref(null);
 
 const columns = [
-  { title: 'Mã đơn', dataIndex: 'id', key: 'id', width: 120 },
-  { title: 'Ngày đặt', dataIndex: 'created_at', key: 'created_at', width: 150, customRender: ({ text }) => formatDate(text) },
-  { title: 'Tổng tiền', dataIndex: 'price', key: 'price', width: 150, customRender: ({ text }) => formatPrice(text) },
-  { title: 'Trạng thái', key: 'state', width: 120, slots: { customRender: 'state' } },
-  { title: 'Hành động', key: 'action', width: 150, slots: { customRender: 'action' } }
-];
-
-const itemColumns = [
-  { title: 'Tên sản phẩm', key: 'name', customRender: ({ record }) => record.product?.name || 'N/A' },
-  { title: 'Đơn giá', key: 'price', customRender: ({ record }) => formatPrice(record.product?.price || 0) },
-  { title: 'Số lượng', dataIndex: 'count', key: 'count' }
+  { title: 'ID', dataIndex: 'id', key: 'id', width: 120 },
+  { title: 'Order date', dataIndex: 'created_at', key: 'created_at', width: 150, customRender: ({ text }) => formatDate(text) },
+  { title: 'Total amount', dataIndex: 'price', key: 'price', width: 150, customRender: ({ text }) => formatPrice(text) },
+  { title: 'State', key: 'state', width: 120, slots: { customRender: 'state' } },
+  { title: 'Action', key: 'action', width: 150, slots: { customRender: 'action' } }
 ];
 
 const fetchOrders = async () => {
   isLoading.value = true;
   try {
-      const response = await orderApi.getOrders({
+      const response = await orderApi.getOrdersAdmin({
           search: searchText.value,
           currentPage: pagination.value.current,
           limit: pagination.value.pageSize,
@@ -124,12 +108,12 @@ const viewOrderDetail = (order) => {
 
 const changeStateOrder = async (orderId) => {
   try {
-    await orderApi.updateState("canceled",orderId);
-    message.success("Đơn hàng đã bị hủy");
+    await orderApi.updateStateAdmin("canceled",orderId);
+    message.success("Order has been cancelled");
     fetchOrders();
   } catch (error) {
-    console.error("Lỗi hủy đơn hàng:", error);
-    message.error("Không thể hủy đơn hàng");
+    console.error("Order cancellation error:", error);
+    message.error("Order cannot be cancelled.");
   }
 };
 
@@ -144,7 +128,9 @@ const formatPrice = (price) => new Intl.NumberFormat('vi-VN', { style: 'currency
 
 const formatDate = (date) => new Intl.DateTimeFormat('vi-VN', { year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date(date));
 
-onMounted(fetchOrders);
+onMounted(() => {
+  fetchOrders();
+});
 </script>
 
 <style scoped>

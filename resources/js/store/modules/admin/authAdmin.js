@@ -1,10 +1,9 @@
 import axios from "axios";
-import router from "../../../routes";
-import authApi from "../../../api/auth";
+import router from "@/routes";
+import authApi from "@/api/auth";
 
 const state = () => ({
     admin: null,
-    // JSON.parse(localStorage.getItem("admin")) || 
     token: localStorage.getItem("token_admin") || null,
 });
 

@@ -41,7 +41,7 @@
             </a-button>
         </div>
 
-        <!-- Modal xác nhận import -->
+        <!-- Modal confirm import -->
         <a-modal
             v-model:visible="isImportModalVisible"
             title="Import Products"
@@ -94,9 +94,9 @@
 import { h, ref, onMounted } from 'vue';
 import { message, Modal } from "ant-design-vue";
 import { EditOutlined, DeleteOutlined, PlusOutlined, ExportOutlined, ImportOutlined } from "@ant-design/icons-vue";
-import productApi from '../../../api/product';
-import AddProductModal from '../../../components/modals/AddProductModal.vue';
-import UpdateProductModal from '../../../components/modals/UpdateProductModal.vue';
+import productApi from '@/api/product';
+import AddProductModal from '@/components/modals/AddProductModal.vue';
+import UpdateProductModal from '@/components/modals/UpdateProductModal.vue';
 
 const product = ref([]);
 const isLoading = ref(false);
@@ -184,7 +184,6 @@ const handleBulkDelete = async () => {
             }
         },
         onCancel() {
-            // Do nothing
         },
     });
 };
@@ -197,7 +196,7 @@ const exportData = async () => {
         const products = response.data;
 
         if (!products.length) {
-            message.warning("Không có sản phẩm để xuất.");
+            message.warning("There are no products to export.");
             return;
         }
 
@@ -276,7 +275,7 @@ const resetImport = () => {
 
 const handleDetails =  async (record) =>{
     showUpdateModal();
-    const res = await productApi.getProductDetails(record.id)
+    const res = await productApi.getProductDetailsAdmin(record.id)
     productDetails.value = res.data
 }
 
@@ -299,7 +298,7 @@ const handleDelete = async (id) => {
 const fetchProducts = async () => {
     isLoading.value = true;
     try {
-        const response = await productApi.getProducts({
+        const response = await productApi.getProductsAdmin({
             search: searchText.value,
             currentPage: pagination.value.current,
             limit: pagination.value.pageSize,
@@ -322,7 +321,6 @@ const handleAddProduct = async (data) => {
         message.error("Please fill all required fields");
         return;
     }
-    console.log("data.image",data);
 
     let formData = new FormData();
     formData.append("name", data.name);

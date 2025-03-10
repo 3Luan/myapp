@@ -1,5 +1,4 @@
-import { apiAdmin } from "./axios";
-
+import { apiAdmin } from "@/api/axios";
 
 class UserApi {
     getUsers = (params) => {

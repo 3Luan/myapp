@@ -40,7 +40,6 @@
 <script setup>
 import { ref } from 'vue';
 import { useStore } from 'vuex';
-import authApi from '../../api/auth';
 
 const isLoading = ref(false);
 const errorMessage = ref("");

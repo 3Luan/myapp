@@ -1,172 +1,132 @@
 <template>
-  <div class="home-container">
-    <!-- Header Section -->
+  <div class="home-container" @scroll="handleScroll">
     <header class="header">
-      <!-- Search Bar -->
-      <div class="search-bar">
-        <a-input-search 
-            v-model:value="searchText"
-            placeholder="Search..."
-            enter-button
-            @search="handleSearch"
-            style="width: 50%;"
-        />
-      </div>
+      <a-input-search
+        v-model:value="searchText"
+        placeholder="Search..."
+        enter-button="Search"
+        @search="fetchProducts(true, true)"
+        class="search-input"
+      />
     </header>
 
-    <!-- Filter Section -->
     <section class="filter-section">
-      <div class="filters">
-        <select v-model="sortBy" @change="sortProducts" class="filter-select">
-          <option value="default">Sắp xếp mặc định</option>
-          <option value="price-asc">Giá: Thấp đến Cao</option>
-          <option value="price-desc">Giá: Cao đến Thấp</option>
-          <option value="name">Tên: A-Z</option>
-        </select>
-      </div>
+      <a-select v-model:value="sortBy" @change="fetchProducts(true, true)" class="filter-select">
+        <a-select-option value="default">Default</a-select-option>
+        <a-select-option value="price-asc">Price: Low to High</a-select-option>
+        <a-select-option value="price-desc">Price: High to Low</a-select-option>
+      </a-select>
     </section>
 
-    <!-- Products Grid -->
-    <section class="products-grid">
-      <div v-for="product in filteredProducts" :key="product.id">
-        <div class="cart-wrapper">
-          <CustomCart :data="product"/>
-        </div>
-      </div>
-    </section>
+    <a-spin :spinning="isLoading">
+      <section class="products-grid">
+        <CustomCart v-for="product in products" :key="product.id" :data="product" />
+      </section>
+      <div v-if="isLoadingMore" class="loading-more">Loading...</div>
+    </a-spin>
   </div>
 </template>
 
 <script setup>
-import { ref, computed } from 'vue';
-import CustomCart from '../../components/common/CustomProductCart.vue';
-import productApi from '../../api/product';
+import { ref, onMounted, watch } from 'vue';
+import { useRouter, useRoute } from 'vue-router';
+import CustomCart from '@/components/common/CustomProductCart.vue';
+import productApi from '@/api/product';
 
-const searchText = ref('');
-const selectedCategory = ref('');
-const sortBy = ref('default');
+const router = useRouter();
+const route = useRoute();
+const searchText = ref(route.query.search || '');
+const sortBy = ref(route.query.sort || 'default');
 const isLoading = ref(false);
+const isLoadingMore = ref(false);
 const products = ref([]);
-const pagination = ref({ current: 1, pageSize: 10, total: 0 });
-const orderElement = ref('name');
-const orderType = ref('asc');
+const pagination = ref({ current: 1, pageSize: 20, total: 0 });
+const hasMore = ref(true);
 
-const fetchProducts = async () => {
-  isLoading.value = true;
+const getSortParams = () => {
+  if (sortBy.value === 'price-asc') return { order_element: 'price', order_type: 'asc' };
+  if (sortBy.value === 'price-desc') return { order_element: 'price', order_type: 'desc' };
+  return { order_element: 'name', order_type: 'asc' };
+};
+
+const fetchProducts = async (reset = false, updateUrl = false) => {
+  if ((isLoading.value || isLoadingMore.value) && !reset) return;
+  
+  if (reset) {
+    pagination.value.current = 1;
+    products.value = [];
+    hasMore.value = true;
+  }
+  
+  isLoading.value = reset;
+  isLoadingMore.value = !reset;
+
   try {
-      const response = await productApi.getProducts({
-          search: searchText.value,
-          currentPage: pagination.value.current,
-          limit: pagination.value.pageSize,
-          order_element: orderElement.value,
-          order_type: orderType.value,
-      });
+    const { order_element, order_type } = getSortParams();
+    const response = await productApi.getProducts({
+      search: searchText.value,
+      currentPage: pagination.value.current,
+      limit: pagination.value.pageSize,
+      order_element,
+      order_type,
+    });
 
-      products.value = response.data.data;
-      pagination.value.total = response.data.total;
+    products.value = reset ? response.data.data : [...products.value, ...response.data.data];
+    pagination.value.total = response.data.total;
+    pagination.value.current += 1;
+    hasMore.value = products.value.length < response.data.total;
+
+    if (updateUrl) {
+      router.push({ query: { search: searchText.value || undefined, sort: sortBy.value !== 'default' ? sortBy.value : undefined } });
+    }
   } catch (error) {
-      console.error("Error:", error);
+    console.error('Error:', error);
   } finally {
-      isLoading.value = false;
+    isLoading.value = false;
+    isLoadingMore.value = false;
   }
 };
 
-const filteredProducts = computed(() => {
-  let result = [...products.value];
-
-  if (selectedCategory.value) {
-    result = result.filter(product => product.category === selectedCategory.value);
+const handleScroll = (event) => {
+  const container = event.target;
+  if (container.scrollTop + container.clientHeight >= container.scrollHeight - 1000 && hasMore.value) {
+    fetchProducts();
   }
-
-  if (searchText.value) {
-    result = result.filter(product => 
-      product.name.toLowerCase().includes(searchText.value.toLowerCase())
-    );
-  }
-
-  switch (sortBy.value) {
-    case 'price-asc':
-      return result.sort((a, b) => a.price - b.price);
-    case 'price-desc':
-      return result.sort((a, b) => b.price - a.price);
-    case 'name':
-      return result.sort((a, b) => a.name.localeCompare(b.name));
-    default:
-      return result;
-  }
-});
-
-const handleSearch = () => {
-  console.log('Searching for:', searchText.value);
 };
 
-const filterProducts = () => {
-  console.log('Filtering by category:', selectedCategory.value);
-};
+watch(() => route.query, () => fetchProducts(true), { deep: true });
 
-const sortProducts = () => {
-  console.log('Sorting by:', sortBy.value);
-};
-
-const formatPrice = (price) => {
-  return price.toLocaleString('vi-VN') + ' đ';
-};
-
-const addToCart = (product) => {
-  console.log('Added to cart:', product);
-};
-
-fetchProducts();
+onMounted(() => fetchProducts(true));
 </script>
 
 <style scoped>
 .home-container {
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 20px;
+  max-width: 1300px;
+  margin: auto;
+  padding: 30px;
+  max-height: 90vh;
+  overflow-y: auto;
 }
 
-.header {
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 30px;
-}
-
-.store-title {
-  font-size: 2rem;
-  color: #333;
-}
-
-.filter-section {
-  margin-bottom: 30px;
-}
-
-.filters {
+.header, .filter-section {
   display: flex;
-  gap: 20px;
+  justify-content: center;
+  margin-bottom: 20px;
 }
 
-.filter-select {
-  padding: 8px;
-  border: 1px solid #ddd;
-  border-radius: 4px;
-  font-size: 1rem;
+.search-input, .filter-select {
+  width: 100%;
+  max-width: 300px;
 }
 
 .products-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(255px, 1fr));
-  gap: 50px;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 20px;
 }
 
-@media (max-width: 768px) {
-  .header {
-    flex-direction: column;
-    gap: 20px;
-  }
-  
-  .filters {
-    flex-direction: column;
-  }
+.loading-more {
+  text-align: center;
+  padding: 20px;
 }
 </style>

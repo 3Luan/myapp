@@ -29,7 +29,7 @@
 </template>
 
 <script setup>
-import { defineProps, defineEmits, ref, computed } from "vue";
+import { defineProps, ref, computed } from "vue";
 
 const props = defineProps({
     data: Array,

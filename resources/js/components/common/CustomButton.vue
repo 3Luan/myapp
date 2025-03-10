@@ -6,7 +6,7 @@
 
 <script setup>
 import { defineProps, computed } from "vue";
-import { ButtonType } from "../../constants/index.js";
+import { ButtonType } from "@/constants/index.js";
 
 const props = defineProps({
   type: {

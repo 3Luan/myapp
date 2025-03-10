@@ -30,11 +30,11 @@
 </template>
 
 <script setup>
-import { h, ref } from 'vue';
-import userApi from '../../../api/user';
+import { h, onMounted, ref } from 'vue';
+import userApi from '@/api/user';
 import { EditOutlined, DeleteOutlined } from "@ant-design/icons-vue";
 import { useToast } from 'vue-toast-notification';
-import Forbidden from '../../../components/Forbidden.vue';
+import Forbidden from '@/components/Forbidden.vue';
 
 const users = ref([]);
 const isLoading = ref(false);
@@ -89,7 +89,7 @@ const fetchUsers = async () => {
         pagination.value.total = response.data.total;
     } catch (error) {
         if (error?.response?.status === 403) {
-            isForbidden.value = true; // Chuyển sang trang 403
+            isForbidden.value = true;
             return;
         }
         console.error("Error fetching users:", error);
@@ -113,7 +113,9 @@ const handleTableChange = (paginationObj, filters, sorter) => {
     fetchUsers();
 };
 
-fetchUsers();
+onMounted(() => {
+    fetchUsers();
+});
 </script>
 
 <style scoped>

@@ -1,6 +1,7 @@
 import axios from "axios";
-import router from "../../routes";
-import authApi from "../../api/auth";
+import router from "@/routes";
+import authApi from "@/api/auth";
+import store from "../index";
 
 const state = () => ({
     user: null,
@@ -55,6 +56,7 @@ const actions = {
     },
 
     logout({ commit }) {
+        store.dispatch("resetStore", null, { root: true });
         commit("LOGOUT");
     },
 };

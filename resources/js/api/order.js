@@ -1,13 +1,13 @@
-import { api, apiAdmin } from "./axios";
+import { api, apiAdmin } from "@/api/axios";
 
 
 class OrderApi {
     getOrders = (params) => {
-        return apiAdmin.get("/orders", { params: params });
+        return api.get("/orders", { params: params });
     }
 
     addOrder = (formData) => {
-        return apiAdmin.post("/order/add", formData, {
+        return api.post("/order/add", formData, {
             headers: {
                 "Content-Type": "multipart/form-data",
             },
@@ -15,6 +15,15 @@ class OrderApi {
     }
 
     updateState = (state, id) => {
+        return api.post("/order/updateState", {state, id});
+    }
+
+    /////////////// Admin ///////////////
+    getOrdersAdmin = (params) => {
+        return apiAdmin.get("/orders", { params: params });
+    }
+
+    updateStateAdmin = (state, id) => {
         return apiAdmin.post("/order/updateState", {state, id});
     }
 }

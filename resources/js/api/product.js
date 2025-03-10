@@ -1,9 +1,22 @@
-import { apiAdmin } from "./axios";
-
+import { apiAdmin, api } from "@/api/axios";
 
 class ProductApi {
     getProducts = (params) => {
+        return api.get("/products", { params: params });
+    }
+
+    getProductDetails = (id) => {
+        return api.get(`/product/${id}`);
+    }
+
+    /////////////// Admin ///////////////
+
+    getProductsAdmin = (params) => {
         return apiAdmin.get("/products", { params: params });
+    }
+
+    getProductDetailsAdmin = (id) => {
+        return apiAdmin.get(`/product/${id}`);
     }
 
     getAllProducts = () => {
@@ -16,10 +29,6 @@ class ProductApi {
                 "Content-Type": "multipart/form-data",
             },
         });
-    }
-
-    getProductDetails = (id) => {
-        return apiAdmin.get(`/product/${id}`);
     }
 
     update = (formData, id) => {

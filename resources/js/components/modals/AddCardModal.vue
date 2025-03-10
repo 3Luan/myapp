@@ -1,10 +1,10 @@
 <template>
   <a-modal 
     :open="open" 
-    title="Purchase Product" 
+    title="Add to cart" 
     @ok="handleSubmit" 
     @cancel="handleClose"
-    okText="Buy"
+    okText="Add"
   >
     <a-form layout="vertical">
       <a-form-item label="Product Name">
@@ -32,9 +32,10 @@
 
 <script setup>
 import { message } from "ant-design-vue";
-import { ref, defineProps, watch } from "vue";
-import orderApi from "@/api/order";
+import { ref, defineProps, defineEmits, watch } from "vue";
+import cartApi from "@/api/cart";
 import { useRouter } from "vue-router";
+import store from "@/store";
 
 const props = defineProps({
   open: Boolean,
@@ -67,32 +68,25 @@ const updateTotalPrice = () => {
 };
 
 const handleSubmit = async () => {
-  if (!purchaseData.value.quantity || purchaseData.value.quantity < 1) {
-    return message.warning("Please enter a valid quantity.");
-  }
-
-  if (purchaseData.value.quantity > props.data.count) {
-    return message.warning("Product does not have enough stock.");
-  }
-
-  const formData = new FormData();
-  formData.append("products[0][product_id]", props.data.id);
-  formData.append("products[0][count]", purchaseData.value.quantity);
-
   try {
-    const response = await orderApi.addOrder(formData);
-      console.log("response",response);
+    if (!purchaseData.value.quantity || purchaseData.value.quantity < 1) {
+      return message.warning("Please enter a valid quantity.");
+    }
 
-      message.success("Order placed successfully!");
-      emit("update:open", false);
-      router.push("/history");
+    if (purchaseData.value.quantity > props.data.count) {
+      return message.warning("Product does not have enough stock.");
+    }
 
+    await store.dispatch("cart/addToCart",{
+      product_id: props.data.id,
+      count: purchaseData.value.quantity
+    })
+    emit("update:open", false);
   } catch (error) {
     console.log(error);
     message.error(error.response?.data?.message || "An error occurred while ordering.");
   }
 };
-
 
 const handleClose = () => {
   emit("update:open", false);
