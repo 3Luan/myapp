@@ -1,0 +1,159 @@
+version: '3.8'
+
+services:
+  mysql:
+    container_name: "${APP_NAME}_database"
+    image: mysql:8.0
+    restart: unless-stopped
+    environment:
+      MYSQL_DATABASE: ${DB_DATABASE}
+      MYSQL_ROOT_PASSWORD: ${DB_PASSWORD}
+      MYSQL_ALLOW_EMPTY_PASSWORD: "yes"
+      TZ: "Asia/Tokyo"
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+    networks:
+      - myapp_network
+
+  backend:
+    build: .
+    container_name: "${APP_NAME}_backend"
+    restart: unless-stopped
+    volumes:
+      - .:/var/www/html
+    ports:
+      - "8000:80"
+    depends_on:
+      - mysql
+    networks:
+      - myapp_network
+
+  frontend:
+    image: node:18
+    container_name: "${APP_NAME}_frontend"
+    working_dir: /var/www/html
+    volumes:
+      - .:/var/www/html
+    ports:
+      - "5173:5173"
+    command: ["npm", "run", "dev"]
+    depends_on:
+      - backend
+    networks:
+      - myapp_network
+
+volumes:
+  mysql_data:
+
+networks:
+  myapp_network:
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+# # version: '3.8'
+
+# # services:
+
+# #   mysql:
+# #       container_name: "${APP_NAME}_database"
+# #       image: mysql:8.0
+# #       restart: unless-stopped
+# #       environment:
+# #         MYSQL_DATABASE: ${DB_DATABASE}
+# #         MYSQL_ROOT_PASSWORD: ${DB_PASSWORD}
+# #         MYSQL_ALLOW_EMPTY_PASSWORD: "yes"
+# #         TZ: "Asia/Tokyo"
+# #       ports:
+# #         - "3306:3306"
+# #       volumes:
+# #         - mysql_data:/var/lib/mysql
+# #       networks:
+# #         - myapp_network
+
+# #   backend:
+# #     build: .
+# #     container_name: ${APP_NAME}_backend
+# #     restart: unless-stopped
+# #     volumes:
+# #       - .:/var/www/html
+# #     ports:
+# #       - "8000:80"
+# #     depends_on:
+# #       - mysql
+# #     networks:
+# #       - myapp_network
+
+# #   frontend:
+# #     image: node:18
+# #     container_name: ${APP_NAME}_frontend
+# #     working_dir: /var/www/html
+# #     volumes:
+# #       - .:/var/www/html
+# #     ports:
+# #       - "5173:5173"
+# #     command: ["npm", "run", "dev"]
+# #     depends_on:
+# #       - backend
+# #     networks:
+# #       - myapp_network
+
+# # volumes:
+# #   mysql_data:
+
+# # networks:
+# #   myapp_network:
+
+# version: '3.8'
+
+# services:
+
+#   mysql:
+#     container_name: "${APP_NAME}_database"
+#     image: mysql:8.0
+#     restart: unless-stopped
+#     environment:
+#       MYSQL_DATABASE: ${DB_DATABASE}
+#       MYSQL_ROOT_PASSWORD: ${DB_PASSWORD}
+#       MYSQL_ALLOW_EMPTY_PASSWORD: "yes"
+#       TZ: "Asia/Tokyo"
+#     ports:
+#       - "3306:3306"
+#     volumes:
+#       - mysql_data:/var/lib/mysql
+#     networks:
+#       - myapp_network
+
+#   backend:
+#     build: .
+#     container_name: "${APP_NAME}_backend"
+#     restart: unless-stopped
+#     volumes:
+#       - .:/var/www/html
+#     ports:
+#       - "8000:80"
+#     depends_on:
+#       - mysql
+#     networks:
+#       - myapp_network
+
+# volumes:
+#   mysql_data:
+
+# networks:
+#   myapp_network:

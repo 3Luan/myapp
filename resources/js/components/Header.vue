@@ -1,28 +1,45 @@
 <template>
-    <a-layout-header class="header">
-      <div class="logo-wrapper">
-        <router-link to="/" class="logo">MyApp</router-link>
-      </div>
-  
-      <!-- Cart and Purchase History -->
-      <div class="nav-actions">
-        <router-link to="/cart" class="nav-item">
-          <ShoppingCartOutlined class="nav-icon" />
-          <span class="nav-text">Cart</span>
-          <a-badge
-            :count="cartCount"
-            :number-style="{ backgroundColor: '#ff4d4f', fontSize: '12px' }"
-            :offset="[10, 0]"
-          />
-        </router-link>
-  
-        <router-link to="/history" class="nav-item">
-          <HistoryOutlined class="nav-icon" />
-          <span class="nav-text">Purchase History</span>
-        </router-link>
-      </div>
-  
-      <!-- User Dropdown-->
+  <a-layout-header class="header">
+    <div class="logo-wrapper">
+      <router-link to="/" class="logo">MyApp</router-link>
+    </div>
+
+    <!-- Cart & Purchase History -->
+    <div class="nav-actions">
+      <router-link to="/cart" class="nav-item">
+        <ShoppingCartOutlined class="nav-icon" />
+        <span class="nav-text">Cart</span>
+        <a-badge :count="cartCount" :offset="[10, 0]" />
+      </router-link>
+
+      <router-link to="/history" class="nav-item">
+        <HistoryOutlined class="nav-icon" />
+        <span class="nav-text">Purchase History</span>
+      </router-link>
+    </div>
+
+    <!-- Notification & User Dropdown -->
+    <div class="user-actions">
+      <!-- Notifications -->
+      <a-dropdown placement="bottomRight">
+        <template #overlay>
+          <a-menu>
+            <a-menu-item v-if="notifications.length === 0" disabled>
+              <span>No new notifications</span>
+            </a-menu-item>
+            <a-menu-item v-for="(notif, index) in notifications" :key="index">
+              <span>{{ notif.message }}</span>
+            </a-menu-item>
+          </a-menu>
+        </template>
+        <div class="nav-item notification-icon">
+          <a-badge :count="notifications.length" :offset="[5, 0]">
+            <BellOutlined class="nav-icon" />
+          </a-badge>
+        </div>
+      </a-dropdown>
+
+      <!-- User Dropdown -->
       <a-dropdown>
         <a-button type="primary" class="user-button">
           <UserOutlined />
@@ -38,24 +55,37 @@
           </a-menu>
         </template>
       </a-dropdown>
-    </a-layout-header>
-  </template>
+    </div>
+  </a-layout-header>
+</template>
 
 <script setup>
-import { computed, ref, watch } from "vue";
+import { computed, ref } from "vue";
 import { useRouter } from "vue-router";
-import { ShoppingCartOutlined, HistoryOutlined, LogoutOutlined, UserOutlined, DownOutlined } from "@ant-design/icons-vue";
+import {
+  ShoppingCartOutlined,
+  HistoryOutlined,
+  LogoutOutlined,
+  UserOutlined,
+  DownOutlined,
+  BellOutlined
+} from "@ant-design/icons-vue";
 import store from "@/store";
 
 const admin = computed(() => store.getters["auth/user"] || {});
 const router = useRouter();
 const cartCount = computed(() => store.getters["cart/count"]);
 
-const logout = () => {
-    store.dispatch("auth/logout");
-    router.push("/login");
-};
+// Fake notifications
+const notifications = ref([
+  { message: "Your order #123 has been shipped." },
+  { message: "Order #456 has been delivered!" }
+]);
 
+const logout = () => {
+  store.dispatch("auth/logout");
+  router.push("/login");
+};
 </script>
 
 <style scoped>
@@ -116,6 +146,7 @@ const logout = () => {
 
 .nav-icon {
   font-size: 18px;
+  color: #fff;
 }
 
 .nav-text {
@@ -166,6 +197,27 @@ const logout = () => {
   line-height: 18px;
   min-width: 18px;
 }
+
+.user-actions {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+
+.notification-icon {
+  cursor: pointer;
+  padding-right: 30px;
+  transition: all 0.3s ease;
+}
+
+.notification-icon:hover .nav-icon {
+  color: #40c4ff; /* Màu xanh khi hover */
+}
+
+.notification-icon:hover {
+  transform: scale(1.1);
+}
+
 
 /* Responsive */
 @media (max-width: 768px) {

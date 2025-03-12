@@ -3,7 +3,7 @@ import { api, apiAdmin } from "@/api/axios";
 
 class OrderApi {
     getOrders = (params) => {
-        return api.get("/orders", { params: params });
+        return api.get("/ordersByUser", { params: params });
     }
 
     addOrder = (formData) => {

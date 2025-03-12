@@ -27,20 +27,26 @@
               {{ record.state }}
             </a-tag>
           </template>
-              <template #action="{ record }">
-                  <div style="display: flex; gap: 8px;">
-                      <a-button type="primary" @click="viewOrderDetail(record)">
-                          Chi tiết
-                      </a-button>
-                      <!-- <a-button
-                          v-if="record.state === 'pending'"
-                          type="primary"
-                          @click="changeStateOrder(record.id)"
-                      >
-                          Cập nhật
-                      </a-button> -->
-                  </div>
-              </template>
+          <template #action="{ record }">
+            <div style="display: flex; gap: 8px;">
+              <a-button type="primary" @click="viewOrderDetail(record)">
+                Details
+              </a-button>
+              <a-dropdown v-if="shouldShowDropdown(record.state)">
+                <template #overlay>
+                  <a-menu @click="({ key }) => handleStateChange(record.id, key)">
+                    <a-menu-item v-if="record.state === 'pending'" key="processing">Processing</a-menu-item>
+                    <a-menu-item v-if="record.state === 'processing'" key="completed">Completed</a-menu-item>
+                    <a-menu-item v-if="record.state !== 'completed' && record.state !== 'canceled'" key="canceled">Canceled</a-menu-item>
+                  </a-menu>
+                </template>
+                <a-button>
+                  Update State
+                  <DownOutlined />
+                </a-button>
+              </a-dropdown>
+            </div>
+          </template>
           </a-table>
       </a-spin>
 
@@ -56,6 +62,7 @@
 <script setup>
 import { ref, onMounted } from 'vue';
 import { message } from "ant-design-vue";
+import { DownOutlined } from '@ant-design/icons-vue';
 import orderApi from '@/api/order';
 import OrderDetailModal from '@/components/modals/OrderDetailModal.vue';
 
@@ -106,15 +113,19 @@ const viewOrderDetail = (order) => {
   modalVisible.value = true;
 };
 
-const changeStateOrder = async (orderId) => {
+const handleStateChange = async (orderId, newState) => {
   try {
-    await orderApi.updateStateAdmin("canceled",orderId);
-    message.success("Order has been cancelled");
+    await orderApi.updateStateAdmin(newState, orderId);
+    message.success(`Order state updated to ${newState}`);
     fetchOrders();
   } catch (error) {
-    console.error("Order cancellation error:", error);
-    message.error("Order cannot be cancelled.");
+    console.error("Order state update error:", error);
+    message.error("Failed to update order state.");
   }
+};
+
+const shouldShowDropdown = (state) => {
+  return state !== 'completed' && state !== 'canceled';
 };
 
 const getStateColor = (state) => ({

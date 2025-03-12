@@ -1,8 +1,9 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Facades\Broadcast;
 
-require base_path('routes/api/user.php');
+// Broadcast::routes(['middleware' => ['auth:sanctum']]);require base_path('routes/api/user.php');
 require base_path('routes/api/auth.php');
 require base_path('routes/api/role.php');
 require base_path('routes/api/product.php');

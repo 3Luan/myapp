@@ -25,16 +25,6 @@ class CartApi {
             },
         });
     }
-
-    /////////////// Admin ///////////////
-
-    getCartsAdmin = (params) => {
-        return apiAdmin.get("/carts", { params: params });
-    }
-
-    updateCartAdmin = (data) => {
-        return apiAdmin.post("/cart/update", data);
-    }
 }
 
 const cartApi = new CartApi();

@@ -5,10 +5,15 @@ namespace App\Http\Controllers;
 use App\Models\Order;
 use App\Models\OrderDetail;
 use App\Models\Product;
+use App\Notifications\OrderStatusUpdated;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Log;
+use App\Mail\OrderStatusChanged as OrderStatusChangedMail;
+use App\Events\OrderStatusChanged as OrderStatusChangedEvent;
+
+use Illuminate\Support\Facades\Mail;
 
 class OrderController extends Controller
 {
@@ -67,7 +72,7 @@ class OrderController extends Controller
         }
     }
 
-    public function getOrders(Request $request)
+    public function getOrdersByUser(Request $request)
     {
         $search = $request->query('search');
         $currentPage = $request->query('currentPage', 1);
@@ -77,6 +82,27 @@ class OrderController extends Controller
 
         $query = Order::with(['orderDetails.product'])
             ->where('user_id', auth()->id());
+
+        if (!empty($search)) {
+            $query->where('id', 'like', "%{$search}%");
+        }
+
+        $query->orderBy($orderElement, $orderType);
+
+        $orders = $query->paginate($limit, ['*'], 'page', $currentPage);
+
+        return response()->json($orders);
+    }
+    
+    public function getOrders(Request $request)
+    {
+        $search = $request->query('search');
+        $currentPage = $request->query('currentPage', 1);
+        $limit = $request->query('limit', 10);
+        $orderElement = $request->query('order_element', 'updated_at');
+        $orderType = $request->query('order_type', 'desc');
+
+        $query = Order::with(['orderDetails.product']);
 
         if (!empty($search)) {
             $query->where('id', 'like', "%{$search}%");
@@ -124,6 +150,15 @@ class OrderController extends Controller
 
         $order->state = $state;
         $order->save();
+
+        // Gửi notification vào database
+        $order->user->notify(new OrderStatusUpdated($order));
+
+        // Gửi thông báo realtime qua Pusher
+        // broadcast(new OrderStatusChangedEvent($order))->toOthers();
+        broadcast(new OrderStatusChangedEvent($order))->toOthers();
+        // event(new OrderStatusChangedEvent($order));
+        Mail::to($order->user->email)->queue(new OrderStatusChangedMail($order));
 
         return response()->json([
             'message' => 'Success',

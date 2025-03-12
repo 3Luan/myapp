@@ -4,8 +4,23 @@ import vue from '@vitejs/plugin-vue';
 import path from 'path';
 
 export default defineConfig({
+    server: {
+        host: '0.0.0.0',
+        port: 5173,
+        strictPort: true,
+        watch: {
+            usePolling: true,
+        },
+        hmr: {
+            host: 'localhost',
+            protocol: 'ws',
+        },
+    },
     plugins: [
-        laravel(['resources/js/app.js']),
+        laravel({
+            input: ['resources/js/app.js'],
+            refresh: true,
+        }),
         vue({
             template: {
                 transformAssetUrls: {
@@ -15,9 +30,9 @@ export default defineConfig({
             },
         }),
     ],
-    // resolve: {
-    //     alias: {
-    //         '@': path.resolve(__dirname, 'resources/js'),
-    //     },
-    // },
+    resolve: {
+        alias: {
+            '@': path.resolve(__dirname, 'resources/js'),
+        },
+    },
 });
