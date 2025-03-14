@@ -17,7 +17,6 @@
   const boxTwo = ref("");
   
   const showMsgBox = () => {
-    console.log("Opening modal...");
     isModalVisible.value = true;
   };
   

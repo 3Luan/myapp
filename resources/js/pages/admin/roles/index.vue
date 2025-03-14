@@ -91,8 +91,8 @@ const fetchRoles = async () => {
             order_type: orderType.value,
         });
 
-        roles.value = response.data.data;
-        pagination.value.total = response.data.total;
+        roles.value = response.data.original.data;
+        pagination.value.total = response.data.original.total;
     } catch (error) {
         if (error?.response?.status === 403) {
             isForbidden.value = true;
@@ -122,7 +122,7 @@ const handleSearch = async () => {
 const addRole = async () => {
     try {
         const response = await roleApi.addRole(nameRole.value);
-        const newRole = response.data.role;
+        const newRole = response.data;
         isLoading.value = true;
 
         roles.value = [newRole, ...roles.value];

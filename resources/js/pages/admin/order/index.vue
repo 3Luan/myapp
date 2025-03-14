@@ -89,8 +89,8 @@ const fetchOrders = async () => {
           currentPage: pagination.value.current,
           limit: pagination.value.pageSize,
       });
-      orders.value = response.data.data;
-      pagination.value.total = response.data.total;
+      orders.value = response.data.original.data;
+      pagination.value.total = response.data.original.total;
   } catch (error) {
       console.error("Error:", error);
   } finally {

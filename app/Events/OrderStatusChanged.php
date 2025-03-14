@@ -32,7 +32,7 @@ class OrderStatusChanged implements ShouldBroadcast
         return [
             'order_id' => $this->order->id,
             'state' => $this->order->state,
-            'message' => "Đơn hàng #{$this->order->id} đã được cập nhật trạng thái: {$this->order->state}"
+            'message' => "Order [{$this->order->id}] updated to: {$this->order->state}."
         ];
     }
 }

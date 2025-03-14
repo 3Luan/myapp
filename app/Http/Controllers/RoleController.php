@@ -2,56 +2,42 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\AddRoleRequest;
 use App\Models\User;
 use App\Models\Role;
+use App\Repositories\Role\RoleRepositoryInterface;
+use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
 
 class RoleController extends Controller
 {
-    public function getRoles(Request $request)
+    protected $roleRepository;
+
+    public function __construct(RoleRepositoryInterface $roleRepository)
     {
-        $search = $request->query('search');
-        $currentPage = $request->query('currentPage', 1);
-        $limit = $request->query('limit', 10);
-        $order_element = $request->query('order_element', 'id');
-        $order_type = $request->query('order_type', 'asc');
-
-        $query = Role::query();
-
-        if (!empty($search)) {
-            $query->where('name', 'like', "%{$search}%");
-        }
-
-        if (in_array($order_element, ['id', 'name'])) {
-            $query->orderBy($order_element, $order_type);
-        }
-
-        $roles = $query->paginate($limit, ['*'], 'page', $currentPage);
-
-        return response()->json($roles);
+        $this->roleRepository = $roleRepository;
     }
 
-    public function addRole(Request $request)
-    {        
-        $validator = Validator::make($request->all(), [
-            'name' => 'required|string|max:255|unique:roles,name'
-        ]);
-
-        if ($validator->fails()) {
-            return response()->json([
-                'message' => $validator->errors()->first()
-            ], 422);
+    public function getRoles(Request $request)
+    {
+        try {
+            return response()->json($this->roleRepository->getRoleList($request));
+        } catch (Exception $e) {
+            Log::error('getRoles Error: ' . $e);
+            return response()->json(['error' => 'The server is invalid.'], 500);
         }
+    }
 
-        $role = Role::create([
-            'name' => $request->name,
-        ]);
-
-        return response()->json([
-            'message' => 'Add role successful',
-            'role' => $role
-        ], 201);
+    public function addRole(AddRoleRequest $request)
+    {
+        try {
+            $result = $this->roleRepository->createRole($request);
+            return response()->json($result, 201);
+        } catch (Exception $e) {
+            Log::error('addRole: ' . $e);
+            return response()->json(['error' => 'The server is invalid.'], 500);
+        }
     }
 }

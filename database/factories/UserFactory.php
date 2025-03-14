@@ -24,11 +24,6 @@ class UserFactory extends Factory
     {
         return [
             'name' => $this->faker->name(),
-            'email' => $this->faker->unique()->safeEmail(),
-            'phone' => $this->faker->phoneNumber(),
-            'role_id' => Role::inRandomOrder()->first()->id,
-            'password' => bcrypt('password'),
         ];
     }
-
 }

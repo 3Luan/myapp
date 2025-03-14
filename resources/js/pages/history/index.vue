@@ -85,8 +85,8 @@ const fetchOrders = async () => {
       limit: pagination.value.pageSize
     });
 
-    orders.value = response.data.data;
-    pagination.value.total = response.data.total;
+    orders.value = response.data.original.data;
+    pagination.value.total = response.data.original.total;
   } catch (error) {
     console.error(error);
     message.error('Unable to load order');

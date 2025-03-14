@@ -56,18 +56,3 @@ app.use(ToastPlugin);
 app.mount("#app");
 
 app.config.globalProperties.$message = message;
-
-watch(
-    () => store.getters["auth/user"], 
-    (user) => {
-      if (user && user.id) {
-        window.Echo.private(`orders.${user.id}`)
-            .listen('OrderStatusChanged', (e) => {
-                console.log("user.id", user.id);
-                console.log("e", e.message);
-                alert(e.message);
-            });
-      }
-    },
-    { immediate: true }
-  );

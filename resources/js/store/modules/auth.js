@@ -39,7 +39,7 @@ const actions = {
             router.push("/");
             return response.data;
         } catch (error) {
-            console.log(error);
+            console.error(error);
             throw new Error(error.response.data.message);
         }
     },
@@ -50,7 +50,7 @@ const actions = {
             const response = await authApi.getProfile();
             commit("SET_USER", response.data);
         } catch (error) {
-            console.log(error);
+            console.error(error);
             commit("LOGOUT");
         }
     },

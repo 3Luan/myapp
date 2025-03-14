@@ -146,15 +146,11 @@ const columns = [
 const rowSelection = {
     selectedRowKeys,
     onChange: (selectedKeys) => {
-        console.log("selectedKeys",selectedKeys);
-        
         selectedRowKeys.value = selectedKeys;
     }
 };
 
 const handleBulkDelete = async () => {
-    console.log(selectedRowKeys.value.length);
-    
     if (selectedRowKeys.value.length === 0) {
         message.warning("Please select at least one product to delete");
         return;
@@ -249,7 +245,6 @@ const handleImportConfirm = async () => {
             onUploadProgress: e => {
                 if (e.lengthComputable) {
                     let percentCompleted = Math.round((e.loaded * 100) / e.total);
-                    console.log(`Upload progress: ${percentCompleted}%`);
                     uploadProgress.value = percentCompleted;
                 }
             }
@@ -306,8 +301,8 @@ const fetchProducts = async () => {
             order_type: orderType.value,
         });
 
-        product.value = response.data.data;
-        pagination.value.total = response.data.total;
+        product.value = response.data.original.data;
+        pagination.value.total = response.data.original.total;
     } catch (error) {
         console.error("Error:", error);
     } finally {

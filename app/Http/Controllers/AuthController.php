@@ -1,6 +1,10 @@
 <?php
 
 namespace App\Http\Controllers;
+use App\Http\Requests\CreateUserRequest;
+use App\Http\Requests\LoginRequest;
+use App\Repositories\Auth\AuthRepositoryInterface;
+use App\Repositories\User\UserRepositoryInterface;
 use Illuminate\Support\Facades\Auth;
 use App\Models\User;
 use Illuminate\Http\Request;
@@ -11,28 +15,24 @@ class AuthController extends Controller
 {
     use AuthorizesRequests;
 
+    protected $userRepository;
+    protected $authRepository;
+
+    public function __construct(UserRepositoryInterface $userRepository, AuthRepositoryInterface $authRepository)
+    {
+        $this->userRepository = $userRepository;
+        $this->authRepository = $authRepository;
+    }
+
     public function showError()
     {
         return response()->json(['message' => 'Invalid credentials'], 401);
     }
 
-    public function register(Request $request)
+    // Register
+    public function register(CreateUserRequest $request)
     {
-        // check email
-        if (User::where('email', $request->email)->exists()) {
-            return response()->json([
-                'message' => 'Email already exists'
-            ], 409);
-        }
-
-        $user = User::create([
-            'name' => $request->name,
-            'email' => $request->email,
-            'phone' => $request->phone,
-            'role_id' => "2", // role = 2: user
-            'password' => bcrypt($request->password),
-        ]);
-
+        $user = $this->userRepository->createUser($request);
         $token = $user->createToken('auth_token')->plainTextToken;
 
         return response()->json([
@@ -42,99 +42,37 @@ class AuthController extends Controller
         ], 201);
     }
 
-    public function login(Request $request)
+    // Login
+    public function login(LoginRequest $request)
     {        
-        $credentials = $request->only('email', 'password');
+        $result = $this->authRepository->login($request);
 
-        if (!$request->email || !$request->password) {
-            return response()->json(['message' => 'Email or Password not found'], 400);
-        }
-
-        // Find user by email
-        $user = User::with('role')->where('email', $request->email)->first();
-
-        // check password
-        if (! $user || ! \Hash::check($request->password, $user->password)) {
-            return response()->json(['message' => 'Invalid credentials'], 401);
-        }
-
-        if ($user->is_locked) {
-            return response()->json(['message' => 'Your account is locked.'], 403);
-        }
-
-        $token = $user->createToken('auth_token')->plainTextToken;
-
-        return response()->json([
-            'message' => 'Login successful',
-            'token' => $token,
-            'user' => $user
-        ]);
+        return response()->json($result, $result['status']);
     }
 
+    // Get Profile user
     public function getProfile(Request $request)
     {
-        // get user from request
-        $user = $request->user()->load('role');
+        $result = $this->authRepository->getProfile($request);
 
-        if (!$user) {
-            return response()->json(['message' => 'Unauthenticated'], 401);
-        }
-
-        return response()->json([
-            'message' => 'User refreshed successfully',
-            'user' => $user
-        ]);
+        return response()->json($result, $result['status']);
     }
 
     /////////////////// Admin ///////////////////
-    public function loginAdmin(Request $request)
+    // Login
+    public function loginAdmin(LoginRequest $request)
     {        
-        $credentials = $request->only('email', 'password');
+        $result = $this->authRepository->loginAdmin($request);
 
-        if (!$request->email || !$request->password) {
-            return response()->json(['message' => 'Email or Password not found'], 400);
-        }
-
-        // get user by email
-        $user = User::with('role')->where('email', $request->email)->first();
-
-        // check password
-        if (!$user || !\Hash::check($request->password, $user->password)) {
-            return response()->json(['message' => 'Invalid credentials'], 401);
-        }
-
-        if ($user->is_locked) {
-            return response()->json(['message' => 'Your account is locked.'], 403);
-        }
-
-        // check is admin
-        if ($user->role->name === 'member') {
-            return response()->json(['message' => 'Access denied'], 403);
-        }
-
-        $token = $user->createToken('auth_token')->plainTextToken;
-
-        return response()->json([
-            'message' => 'Login successful',
-            'token' => $token,
-            'user' => $user
-        ]);
+        return response()->json($result, $result['status']);
     }
 
-
+    // Get Profile user
     public function getProfileAdmin(Request $request)
     {
-        // get user by request
-        $user = $request->user()->load('role');
+        $result = $this->authRepository->getProfileAdmin($request);
 
-        if (!$user) {
-            return response()->json(['message' => 'Unauthenticated'], 401);
-        }
-
-        return response()->json([
-            'message' => 'User refreshed successfully',
-            'user' => $user
-        ]);
+        return response()->json($result, $result['status']);
     }
 
 }

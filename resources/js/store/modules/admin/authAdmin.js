@@ -38,7 +38,7 @@ const actions = {
             router.push("/admin/users");
             return response.data;
         } catch (error) {
-            console.log(error);
+            console.error(error);
             throw new Error(error?.response?.data?.message);
         }
     },
@@ -50,7 +50,7 @@ const actions = {
 
             commit("SET_ADMIN", response.data);
         } catch (error) {
-            console.log(error);
+            console.error(error);
             commit("LOGOUT_ADMIN");
         }
     },

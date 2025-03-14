@@ -81,14 +81,12 @@ const handleSubmit = async () => {
 
   try {
     const response = await orderApi.addOrder(formData);
-      console.log("response",response);
 
-      message.success("Order placed successfully!");
-      emit("update:open", false);
-      router.push("/history");
-
+    message.success("Order placed successfully!");
+    emit("update:open", false);
+    router.push("/history");
   } catch (error) {
-    console.log(error);
+    console.error(error);
     message.error(error.response?.data?.message || "An error occurred while ordering.");
   }
 };

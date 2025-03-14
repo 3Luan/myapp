@@ -85,8 +85,8 @@ const fetchUsers = async () => {
             filters: filters.value
         });
 
-        users.value = response.data.data;
-        pagination.value.total = response.data.total;
+        users.value = response.data.original.data;
+        pagination.value.total = response.data.original.total;
     } catch (error) {
         if (error?.response?.status === 403) {
             isForbidden.value = true;

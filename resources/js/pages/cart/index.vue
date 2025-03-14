@@ -65,6 +65,8 @@ const pagination = ref({ current: 1, pageSize: 10, total: 0 });
 const searchText = ref('');
 const selectedKeys = ref([]);
 const selectAll = ref(false);
+const orderElement = ref('id');
+const orderType = ref('desc');
 
 const columns = [
   { title: "Image", key: "image", slots: { customRender: 'image' }, width: 100 },
@@ -90,12 +92,13 @@ const fetchCart = async () => {
       await store.dispatch("cart/getCarts", {
         search: searchText.value,
         currentPage: pagination.value.current,
-        limit: pagination.value.pageSize
+        limit: pagination.value.pageSize,
+        order_element: orderElement.value,
+        order_type: orderType.value,
       });
     } else {
       cartItems.value = [...store.getters["cart/cart"].data];
       pagination.value.total = store.getters["cart/cart"].total;
-      console.log("data", cartItems.value);
     }
   } catch (error) {
     message.error('Unable to load cart');
@@ -194,9 +197,6 @@ const checkout = async () => {
     }
 
     await store.dispatch("cart/orderCarts", payload);
-
-    message.success("Payment successful!");
-
     selectedKeys.value = [];
   } catch (error) {
     console.error("Error:", error);

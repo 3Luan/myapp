@@ -1,4 +1,5 @@
 import cartApi from "@/api/cart";
+import { message } from "ant-design-vue";
 
 const state = () => ({
     count: null,
@@ -33,19 +34,19 @@ const actions = {
     async getCarts({ commit }, payload) {
         try {
             const response = await cartApi.getCarts(payload);
-            commit("SET_DATA", response.data);
+            commit("SET_DATA", response.data.original);
         } catch (error) {
-            console.log(error);
+            console.error(error);
         }
     },
     
     async addToCart({ commit }, payload) {
         try {
             const response = await cartApi.addCart(payload);
-            commit("ADD_TO_CART", response.data);
+            commit("ADD_TO_CART", response.data.cart);
             return response.data;
         } catch (error) {
-            console.log("Add to cart error:", error);
+            console.error("Add to cart error:", error);
             throw error;
         }
     },
@@ -57,7 +58,7 @@ const actions = {
             commit("REMOVE_FROM_CART", [payload.cart_id]);
             return response.data;
         } catch (error) {
-            console.log("Add to cart error:", error);
+            console.error("Add to cart error:", error);
             throw error;
         }
     },
@@ -65,10 +66,11 @@ const actions = {
     async orderCarts({ commit }, payload) {
         try {
             const response = await cartApi.checkout(payload);
-
+            
             const cartIds = payload.products.map(item => item.cart_id);
             commit("REMOVE_FROM_CART", cartIds);
             
+            message.success(response.data.message);
             return response.data;
         } catch (error) {
             console.error(error);

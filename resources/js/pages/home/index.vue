@@ -71,10 +71,10 @@ const fetchProducts = async (reset = false, updateUrl = false) => {
       order_type,
     });
 
-    products.value = reset ? response.data.data : [...products.value, ...response.data.data];
-    pagination.value.total = response.data.total;
+    products.value = reset ? response.data.original.data : [...products.value, ...response.data.original.data];
+    pagination.value.total = response.data.original.total;
     pagination.value.current += 1;
-    hasMore.value = products.value.length < response.data.total;
+    hasMore.value = products.value.length < response.data.original.total;
 
     if (updateUrl) {
       router.push({ query: { search: searchText.value || undefined, sort: sortBy.value !== 'default' ? sortBy.value : undefined } });

@@ -43,7 +43,7 @@ import { ref } from "vue";
 import { useStore } from "vuex";
 
 const email = ref("admin@gmail.com");
-const password = ref("123");
+const password = ref("123123");
 const loading = ref(false);
 const errorMessage = ref("");
 const store = useStore();
@@ -57,7 +57,7 @@ const loginUser = async () => {
       password: password.value 
     });
   } catch (error) {
-    console.log("error", error);
+    console.error("error", error);
     errorMessage.value = error.message || "Login failed";
   } finally {
     loading.value = false;

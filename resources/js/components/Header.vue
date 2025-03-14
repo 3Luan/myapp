@@ -1,3 +1,4 @@
+<!-- Updated Header Component -->
 <template>
   <a-layout-header class="header">
     <div class="logo-wrapper">
@@ -20,24 +21,8 @@
 
     <!-- Notification & User Dropdown -->
     <div class="user-actions">
-      <!-- Notifications -->
-      <a-dropdown placement="bottomRight">
-        <template #overlay>
-          <a-menu>
-            <a-menu-item v-if="notifications.length === 0" disabled>
-              <span>No new notifications</span>
-            </a-menu-item>
-            <a-menu-item v-for="(notif, index) in notifications" :key="index">
-              <span>{{ notif.message }}</span>
-            </a-menu-item>
-          </a-menu>
-        </template>
-        <div class="nav-item notification-icon">
-          <a-badge :count="notifications.length" :offset="[5, 0]">
-            <BellOutlined class="nav-icon" />
-          </a-badge>
-        </div>
-      </a-dropdown>
+      <!-- NotificationDropdown component -->
+      <notification-dropdown />
 
       <!-- User Dropdown -->
       <a-dropdown>
@@ -60,7 +45,7 @@
 </template>
 
 <script setup>
-import { computed, ref } from "vue";
+import { computed } from "vue";
 import { useRouter } from "vue-router";
 import {
   ShoppingCartOutlined,
@@ -68,19 +53,13 @@ import {
   LogoutOutlined,
   UserOutlined,
   DownOutlined,
-  BellOutlined
 } from "@ant-design/icons-vue";
+import NotificationDropdown from "./NotificationDropdown.vue";
 import store from "@/store";
 
 const admin = computed(() => store.getters["auth/user"] || {});
 const router = useRouter();
 const cartCount = computed(() => store.getters["cart/count"]);
-
-// Fake notifications
-const notifications = ref([
-  { message: "Your order #123 has been shipped." },
-  { message: "Order #456 has been delivered!" }
-]);
 
 const logout = () => {
   store.dispatch("auth/logout");
@@ -203,21 +182,6 @@ const logout = () => {
   align-items: center;
   gap: 20px;
 }
-
-.notification-icon {
-  cursor: pointer;
-  padding-right: 30px;
-  transition: all 0.3s ease;
-}
-
-.notification-icon:hover .nav-icon {
-  color: #40c4ff; /* Màu xanh khi hover */
-}
-
-.notification-icon:hover {
-  transform: scale(1.1);
-}
-
 
 /* Responsive */
 @media (max-width: 768px) {

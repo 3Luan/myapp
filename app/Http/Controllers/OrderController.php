@@ -12,157 +12,51 @@ use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Log;
 use App\Mail\OrderStatusChanged as OrderStatusChangedMail;
 use App\Events\OrderStatusChanged as OrderStatusChangedEvent;
-
+use App\Http\Requests\AddOrderRequest;
+use App\Repositories\Order\OrderRepositoryInterface;
+use Exception;
 use Illuminate\Support\Facades\Mail;
 
 class OrderController extends Controller
 {
-    public function addOrder(Request $request)
+    protected $orderRepository;
+
+    public function __construct(OrderRepositoryInterface $orderRepository)
     {
-        $validated = $request->validate([
-            'products' => 'required|array',
-            'products.*.product_id' => 'required|exists:products,id',
-            'products.*.count' => 'required|integer|min:1',
-        ]);
+        $this->orderRepository = $orderRepository;
+    }
 
+    public function addOrder(AddOrderRequest $request)
+    {
         try {
-            $order = Order::getConnectionResolver()->transaction(function () use ($validated) {
-                $totalPrice = 0;
-                $orderDetails = [];
+            $result = $this->orderRepository->createOrder($request);
 
-                foreach ($validated['products'] as $item) {
-                    $product = Product::lockForUpdate()->find($item['product_id']);
-
-                    // Check count
-                    if ($product->count < $item['count']) {
-                        throw new \Exception("Product {$product->name} does not have enough stock.");
-                    }
-
-                    $totalPrice += $product->price * $item['count'];
-                    $product->decrement('count', $item['count']);
-
-                    $orderDetails[] = new OrderDetail([
-                        'product_id' => $product->id,
-                        'count' => $item['count'],
-                    ]);
-                }
-
-                // Create
-                $order = Order::create([
-                    'user_id' => auth()->id(),
-                    'price' => $totalPrice,
-                    'state' => 'pending',
-                ]);
-
-                // Save order details
-                $order->orderDetails()->saveMany($orderDetails);
-
-                return $order;
-            });
-
-            return response()->json([
-                'message' => 'Success',
-                'order' => $order->load('orderDetails'),
-            ], 201);
-        } catch (\Exception $e) {
-            return response()->json([
-                'message' => 'Order failed',
-                'error' => $e->getMessage(),
-            ], 500);
+            return response()->json($result, 201);
+        } catch (Exception $e) {
+            Log::error('addOrder Error: ' . $e);
+            return response()->json(['error' => 'The server is invalid.'], 500);
         }
     }
 
     public function getOrdersByUser(Request $request)
     {
-        $search = $request->query('search');
-        $currentPage = $request->query('currentPage', 1);
-        $limit = $request->query('limit', 10);
-        $orderElement = $request->query('order_element', 'updated_at');
-        $orderType = $request->query('order_type', 'desc');
-
-        $query = Order::with(['orderDetails.product'])
-            ->where('user_id', auth()->id());
-
-        if (!empty($search)) {
-            $query->where('id', 'like', "%{$search}%");
-        }
-
-        $query->orderBy($orderElement, $orderType);
-
-        $orders = $query->paginate($limit, ['*'], 'page', $currentPage);
-
-        return response()->json($orders);
+        return response()->json($this->orderRepository->getOrdersByUser($request));
     }
-    
+
     public function getOrders(Request $request)
     {
-        $search = $request->query('search');
-        $currentPage = $request->query('currentPage', 1);
-        $limit = $request->query('limit', 10);
-        $orderElement = $request->query('order_element', 'updated_at');
-        $orderType = $request->query('order_type', 'desc');
-
-        $query = Order::with(['orderDetails.product']);
-
-        if (!empty($search)) {
-            $query->where('id', 'like', "%{$search}%");
-        }
-
-        $query->orderBy($orderElement, $orderType);
-
-        $orders = $query->paginate($limit, ['*'], 'page', $currentPage);
-
-        return response()->json($orders);
+        return response()->json($this->orderRepository->getOrderList($request));
     }
 
     public function updateState(Request $request)
     {
-        $id = $request->input('id');
-        $order = Order::find($id);
+        try {
+            $result = $this->orderRepository->updateOrder($request);
 
-        if (!$order) {
-            return response()->json(['message' => 'Order does not exist'], 404);
+            return response()->json($result, 200);
+        } catch (Exception $e) {
+            Log::error('updateState Error: ' . $e);
+            return response()->json(['error' => 'The server is invalid.'], 500);
         }
-
-        $state = $request->input('state');
-
-        $validStates = ['pending', 'processing', 'completed', 'canceled'];
-        if (!in_array($state, $validStates)) {
-            return response()->json(['message' => 'Invalid state'], 400);
-        }
-
-        // check update state
-        if ($order->state === 'processing' && $state === 'canceled') {
-            return response()->json(['message' => 'Cannot cancel orders while they are being processed.'], 400);
-        }
-
-        if ($order->state === 'completed') {
-            return response()->json(['message' => 'Cannot change status once order is completed'], 400);
-        }
-
-        if ($order->state === 'canceled') {
-            return response()->json(['message' => 'Cannot change status once order has been cancelled'], 400);
-        }
-
-        if ($order->state === 'pending' && $state === 'completed') {
-            return response()->json(['message' => 'Cannot change status'], 400);
-        }
-
-        $order->state = $state;
-        $order->save();
-
-        // Gửi notification vào database
-        $order->user->notify(new OrderStatusUpdated($order));
-
-        // Gửi thông báo realtime qua Pusher
-        // broadcast(new OrderStatusChangedEvent($order))->toOthers();
-        broadcast(new OrderStatusChangedEvent($order))->toOthers();
-        // event(new OrderStatusChangedEvent($order));
-        Mail::to($order->user->email)->queue(new OrderStatusChangedMail($order));
-
-        return response()->json([
-            'message' => 'Success',
-            'order' => $order
-        ]);
     }
 }

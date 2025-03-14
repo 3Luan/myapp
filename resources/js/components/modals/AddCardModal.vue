@@ -83,7 +83,7 @@ const handleSubmit = async () => {
     })
     emit("update:open", false);
   } catch (error) {
-    console.log(error);
+    console.error(error);
     message.error(error.response?.data?.message || "An error occurred while ordering.");
   }
 };

@@ -48,7 +48,7 @@ class OrderStatusUpdated extends Notification implements ShouldQueue
         return [
             'order_id' => $this->order->id,
             'status' => $this->order->state,
-            'message' => "Your order status has been updated to '{$this->order->state}'.",
+            'message' => "Order [{$this->order->id}] updated to: {$this->order->state}.",
         ];
     }
 

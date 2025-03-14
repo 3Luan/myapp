@@ -85,8 +85,6 @@ const handelRegister = async () => {
             password: password.value
         });
 
-        console.log("response", response);
-
         await store.dispatch("auth/login", {
             email: email.value,
             password: password.value
@@ -94,7 +92,8 @@ const handelRegister = async () => {
 
         router.push("/");
     } catch (error) {
-      errorMessage.value = error;
+      console.error("error", error);
+      errorMessage.value = error?.response?.data?.message || "Something went wrong";
     } finally {
         isLoading.value = false;
     }
