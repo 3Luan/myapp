@@ -89,7 +89,7 @@ const fetchOrders = async () => {
     pagination.value.total = response.data.original.total;
   } catch (error) {
     console.error(error);
-    message.error('Unable to load order');
+    message.error(error.response?.data?.message ||'Unable to load order');
   } finally {
     isLoading.value = false;
   }
@@ -119,7 +119,7 @@ const cancelOrder = async (orderId) => {
     message.success("Order has been cancelled!");
     fetchOrders();
   } catch (error) {
-    message.error("Order cannot be cancelled!");
+    message.error(error.response?.data?.message ||"Order cannot be cancelled!");
     console.error(error);
   }
 };

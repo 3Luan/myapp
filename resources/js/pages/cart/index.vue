@@ -101,7 +101,7 @@ const fetchCart = async () => {
       pagination.value.total = store.getters["cart/cart"].total;
     }
   } catch (error) {
-    message.error('Unable to load cart');
+    message.error(error.response?.data?.message ||'Unable to load cart');
   } finally {
     isLoading.value = false;
   }
@@ -171,7 +171,7 @@ const removeFromCart = async (item) => {
   try {
     await store.dispatch("cart/removeCard", {cart_id : item.id});
   } catch (error) {
-    message.error('Cannot delete product');
+    message.error(error.response?.data?.message ||'Cannot delete product');
   }
 };
 

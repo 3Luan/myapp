@@ -32,13 +32,17 @@ class UserRepository extends BaseRepository implements UserRepositoryInterface
   public function getUserList(Request $request): JsonResponse|array
   {
     try {
-      $query = User::with('role');
+      DB::beginTransaction();
+      $query = User::with('role')
+        ->where('id', '!=', auth()->id());
 
       $result = $this->paginateQuery($query, $request->all(), 'user');
 
+      DB::commit();
       return response()->json($result);
     } catch (Exception $e) {
-      return ['message' => $e->getMessage(), 'status' => 500];
+      DB::rollBack();
+      return response()->json(['message' => $e->getMessage(), 'status' => 500], 500);
     }
   }
 
@@ -65,12 +69,30 @@ class UserRepository extends BaseRepository implements UserRepositoryInterface
    * update user
    * @return mixed
    */
-  public function updateUser(Request $request, User $user)
+  public function updateUser(Request $request, $id)
   {
     try {
+      DB::beginTransaction();
+      $user = User::findOrFail($id);
+
+      $data = $request->only(['name', 'phone', 'role_id', 'is_locked']);
+
+      if (!empty($request->password)) {
+        $data['password'] = bcrypt($request->password);
+      }
+
+      $user->update($data);
+
+      DB::commit();
+      return $user;
     } catch (Exception $e) {
+      DB::rollBack();
+      Log::error('updateUser: ' . $e->getMessage());
+      return response()->json(['error' => 'Failed to update user'], 500);
     }
   }
+
+
 
   /**
    * get number users by time
@@ -78,4 +100,19 @@ class UserRepository extends BaseRepository implements UserRepositoryInterface
    * @return void
    */
   public function getNumberUserByTime(Request $request) {}
+
+  /**
+   * get user by id
+   * @param Request $request
+   * @return User
+   */
+  public function getUserById(string $id)
+  {
+    try {
+      return User::find($id)->load('role');
+    } catch (Exception $e) {
+      Log::error('getUserById: ' . $e->getMessage());
+      throw new Exception('Failed to get User By Id');
+    }
+  }
 }

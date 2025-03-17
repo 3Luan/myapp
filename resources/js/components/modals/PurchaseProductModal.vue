@@ -69,6 +69,7 @@ const updateTotalPrice = () => {
 const handleSubmit = async () => {
   if (!purchaseData.value.quantity || purchaseData.value.quantity < 1) {
     return message.warning("Please enter a valid quantity.");
+
   }
 
   if (purchaseData.value.quantity > props.data.count) {

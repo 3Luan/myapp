@@ -1,6 +1,6 @@
 <template>
     <Forbidden v-if="isForbidden" />
-    <a-card v-else title="Role Management" style="width: 100%; height: 86vh;">
+    <a-card v-else title="Role Management" style="width: 100%; height: 76.5vh;">
         <div class="mb-4 flex items-center justify-between">
             <!-- Search -->
             <form @submit.prevent="handleSearch">

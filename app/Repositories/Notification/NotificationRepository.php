@@ -8,6 +8,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use App\Repositories\BaseRepository;
+use Illuminate\Support\Facades\DB;
 
 class NotificationRepository extends BaseRepository implements NotificationRepositoryInterface
 {
@@ -27,6 +28,8 @@ class NotificationRepository extends BaseRepository implements NotificationRepos
   public function getNotificationList(Request $request)
   {
     try {
+      DB::beginTransaction();
+
       $user = auth()->user();
 
       $query = $user->notifications();
@@ -34,11 +37,15 @@ class NotificationRepository extends BaseRepository implements NotificationRepos
       $notifications = $this->paginateQuery($query->getQuery(), $request->all(), 'notification');
 
       $unreadCount = $user->unreadNotifications()->count();
+      DB::commit();
+
       return [
         'notifications' => $notifications,
         'unread_count' => $unreadCount
       ];
     } catch (Exception $e) {
+      DB::rollBack();
+
       Log::error('getNotificationList: ' . $e->getMessage());
       throw new Exception('Failed to fetch notifications');
     }
@@ -52,6 +59,8 @@ class NotificationRepository extends BaseRepository implements NotificationRepos
   public function readNotification(Request $request)
   {
     try {
+      DB::beginTransaction();
+
       $user = auth()->user();
       $notification = $user->notifications()->where('id', $request->id)->first();
 
@@ -61,9 +70,12 @@ class NotificationRepository extends BaseRepository implements NotificationRepos
       }
 
       $notification->markAsRead();
+      DB::commit();
 
       return $notification;
     } catch (Exception $e) {
+      DB::rollBack();
+
       Log::error('readNotification: ' . $e->getMessage());
       throw new Exception('Failed to read notification');
     }

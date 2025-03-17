@@ -38,13 +38,17 @@ class OrderRepository extends BaseRepository implements OrderRepositoryInterface
   public function getOrdersByUser(Request $request): JsonResponse|array
   {
     try {
+      DB::beginTransaction();
+
       $query = Order::with(['orderDetails.product'])
         ->where('user_id', auth()->id());
 
       $result = $this->paginateQuery($query, $request->all(), 'order');
 
+      DB::commit();
       return response()->json($result);
     } catch (Exception $e) {
+      DB::rollBack();
       return ['message' => $e->getMessage(), 'status' => 500];
     }
   }
@@ -108,45 +112,47 @@ class OrderRepository extends BaseRepository implements OrderRepositoryInterface
    * update Order
    * @return mixed
    */
-  public function updateOrder(Request $request)
+  public function updateOrder($id, $state)
   {
-    try {
-      $id = $request->input('id');
-      $state = $request->input('state');
-
-      $order = Order::find($id);
-      if (!$order) {
-        return ['status' => 404, 'message' => 'Order does not exist'];
-      }
-
-      $validStates = ['pending', 'processing', 'completed', 'canceled'];
-      if (!in_array($state, $validStates)) {
-        return ['status' => 400, 'message' => 'Invalid state'];
-      }
-
-      if ($order->state === 'processing' && $state === 'canceled') {
-        return ['status' => 400, 'message' => 'Cannot cancel orders while they are being processed.'];
-      }
-      if (in_array($order->state, ['completed', 'canceled'])) {
-        return ['status' => 400, 'message' => 'Cannot change status once order is completed or canceled.'];
-      }
-      if ($order->state === 'pending' && $state === 'completed') {
-        return ['status' => 400, 'message' => 'Cannot change status from pending to completed directly.'];
-      }
-
-      DB::transaction(function () use ($order, $state) {
-        $order->update(['state' => $state]);
-
-        $order->user->notify(new OrderStatusUpdated($order));
-        broadcast(new OrderStatusChangedEvent($order))->toOthers();
-        Mail::to($order->user->email)->queue(new OrderStatusChangedMail($order));
-      });
-
-      return ['status' => 200, 'message' => 'Success', 'order' => $order];
-    } catch (Exception $e) {
-      return ['error' => $e->getMessage()];
+    $order = Order::find($id);
+    if (!$order) {
+      throw new Exception('Order does not exist', 404);
     }
+
+    $validStates = ['pending', 'processing', 'completed', 'canceled'];
+    if (!in_array($state, $validStates)) {
+      throw new Exception('Invalid state', 400);
+    }
+
+    if (in_array($order->state, ['completed', 'canceled'])) {
+      throw new Exception('Cannot change status once order is completed or canceled.', 400);
+    }
+
+    if ($order->state === 'pending' && $state === 'completed') {
+      throw new Exception('Cannot change status from pending to completed directly.', 400);
+    }
+
+    if ($order->state === $state) {
+      return $order;
+    }
+
+    DB::beginTransaction();
+    try {
+      $order->update(['state' => $state]);
+
+      $order->user->notify(new OrderStatusUpdated($order));
+      broadcast(new OrderStatusChangedEvent($order))->toOthers();
+      Mail::to($order->user->email)->queue(new OrderStatusChangedMail($order));
+
+      DB::commit();
+    } catch (Exception $e) {
+      DB::rollBack();
+      throw new Exception('Failed to update order status', 500);
+    }
+
+    return $order;
   }
+
 
   /**
    * get number Orders by time

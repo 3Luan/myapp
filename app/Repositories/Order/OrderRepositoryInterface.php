@@ -40,5 +40,5 @@ interface OrderRepositoryInterface extends RepositoryInterface
    * update Order
    * @return mixed
    */
-  public function updateOrder(Request $request);
+  public function updateOrder(string $id, $state);
 }

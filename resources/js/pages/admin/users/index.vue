@@ -1,6 +1,6 @@
 <template>
     <Forbidden v-if="isForbidden" />
-    <a-card v-else title="Account Management" style="width: 100%; height: 86vh;">
+    <a-card v-else title="Account Management" style="width: 100%; height: 76.5vh;">
         <div class="mb-4 flex items-center justify-between">
             <!-- Search -->
             <a-input-search 
@@ -21,11 +21,19 @@
                     :loading="isLoading"
                     rowKey="id"
                     bordered
-                    :scroll="{ y: '55vh' }"
+                    :scroll="{ y: '50vh' }"
                     @change="handleTableChange"
                 />
             </div>
         </a-spin>
+
+        <UserModal
+            :open="isUserModalOpen" 
+            :data="userDetails"
+            :reset="resetForm"
+            @update:open ="isUserModalOpen = $event"
+            @updateUser="handleUpdateUser" 
+        />
     </a-card>
 </template>
 
@@ -35,6 +43,8 @@ import userApi from '@/api/user';
 import { EditOutlined, DeleteOutlined } from "@ant-design/icons-vue";
 import { useToast } from 'vue-toast-notification';
 import Forbidden from '@/components/Forbidden.vue';
+import UserModal from '@/components/modals/UserModal.vue';
+import { message } from 'ant-design-vue';
 
 const users = ref([]);
 const isLoading = ref(false);
@@ -45,6 +55,8 @@ const orderType = ref('asc');
 const filters = ref({ role: [], gender: [] });
 const $toast = useToast();
 const isForbidden = ref(false);
+const isUserModalOpen = ref(false);
+const userDetails = ref("");
 
 const columns = [
     { title: "ID", dataIndex: "id", key: "id", sorter: true },
@@ -63,7 +75,7 @@ const columns = [
         customRender: ({ record }) => [
             h(EditOutlined, {
                 style: { color: "#1890ff", marginRight: "10px", cursor: "pointer" },
-                // onClick: () => handleEdit(record),
+                onClick: () => handleDetails(record),
             }),
             h(DeleteOutlined, {
                 style: { color: "red", cursor: "pointer" },
@@ -99,6 +111,20 @@ const fetchUsers = async () => {
     }
 };
 
+const handleUpdateUser = async (formData, id) => {
+    try {
+        const response = await userApi.update(formData, id);
+        console.log(response);
+        
+        message.success("user update successfully!");
+        isUserModalOpen.value = false;
+        fetchUsers();
+    } catch (error) {
+        console.error("Error", error);
+        message.error(error.response?.data?.message ||"Failed to update user");
+    }
+};
+
 const handleSearch = async () => {
     pagination.value.current = 1;
     fetchUsers();
@@ -112,6 +138,18 @@ const handleTableChange = (paginationObj, filters, sorter) => {
     }
     fetchUsers();
 };
+
+const handleDetails =  async (record) =>{
+    showUserModal();
+    const res = await userApi.getUserById(record.id)
+    userDetails.value = res.data
+}
+
+
+const showUserModal = () => {
+    isUserModalOpen.value = true;
+};
+
 
 onMounted(() => {
     fetchUsers();

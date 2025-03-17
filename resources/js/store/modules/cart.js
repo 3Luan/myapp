@@ -44,6 +44,8 @@ const actions = {
         try {
             const response = await cartApi.addCart(payload);
             commit("ADD_TO_CART", response.data.cart);
+            console.log(response);
+            
             return response.data;
         } catch (error) {
             console.error("Add to cart error:", error);

@@ -68,11 +68,20 @@ class CartController extends Controller
     public function updateState(Request $request)
     {
         try {
-            $order = $this->cartRepository->updateState($request);
+            $id = $request->id;
 
-            return response()->json(['message' => 'Order has been canceled successfully', 'order' => $order], 200);
+            $order = $this->cartRepository->updateState($id);
+
+            return response()->json([
+                'status' => 200,
+                'message' => 'Order canceled successfully',
+                'order' => $order
+            ], 200);
         } catch (Exception $e) {
-            return response()->json(['message' => $e->getMessage()], 500);
+            return response()->json([
+                'status' => $e->getCode() ?: 500,
+                'message' => $e->getMessage()
+            ], $e->getCode() ?: 500);
         }
     }
 

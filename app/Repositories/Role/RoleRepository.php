@@ -32,12 +32,15 @@ class RoleRepository extends BaseRepository implements RoleRepositoryInterface
   public function getRoleList(Request $request): JsonResponse|array
   {
     try {
+      DB::beginTransaction();
       $query = Role::query();
 
       $result = $this->paginateQuery($query, $request->all(), 'role');
 
+      DB::commit();
       return response()->json($result);
     } catch (Exception $e) {
+      DB::rollBack();
       return ['message' => $e->getMessage(), 'status' => 500];
     }
   }
@@ -49,12 +52,15 @@ class RoleRepository extends BaseRepository implements RoleRepositoryInterface
   public function createRole(Request $request)
   {
     try {
+      DB::beginTransaction();
       $role = Role::create([
         'name' => $request->name,
       ]);
 
+      DB::commit();
       return $role;
     } catch (Exception $e) {
+      DB::rollBack();
       return ['message' => $e->getMessage(), 'status' => 500];
     }
   }

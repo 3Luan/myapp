@@ -1,6 +1,6 @@
 <template>
     <div>
-        <a-menu style="width: 100%; height: 50vh;" mode="vertical" :selectedKeys="selectedKeys">
+        <a-menu style="width: 100%; height: 75vh;" mode="vertical" :selectedKeys="selectedKeys">
             <a-menu-item key="admin-users">
                 <router-link :to="{ name: 'admin-users' }" />
                 Accounts

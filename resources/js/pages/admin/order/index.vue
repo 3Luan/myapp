@@ -1,5 +1,5 @@
 <template>
-  <a-card title="Orders Management" style="width: 100%; height: 86vh;">
+  <a-card title="Orders Management" style="width: 100%; height: 76.5vh;">
       <div class="mb-4 flex items-center justify-between">
           <!-- Search -->
           <a-input-search 
@@ -19,7 +19,7 @@
               :loading="isLoading"
               rowKey="id"
               bordered
-              :scroll="{ y: '55vh' }"
+              :scroll="{ y: '50vh' }"
               @change="handleTableChange"
           >
           <template #state="{ record }">
@@ -120,7 +120,7 @@ const handleStateChange = async (orderId, newState) => {
     fetchOrders();
   } catch (error) {
     console.error("Order state update error:", error);
-    message.error("Failed to update order state.");
+    message.error(error?.response?.data?.message || "Failed to update order state.");
   }
 };
 

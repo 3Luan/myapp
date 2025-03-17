@@ -1,5 +1,5 @@
 <template>
-    <a-card title="Products Management" style="width: 100%; height: 86vh;">
+    <a-card title="Products Management" style="width: 100%; height: 76.5vh;">
         <div class="mb-4 flex items-center justify-between">
             <!-- Search -->
             <a-input-search 
@@ -65,7 +65,7 @@
                     :loading="isLoading"
                     rowKey="id"
                     bordered
-                    :scroll="{ y: '55vh' }"
+                    :scroll="{ y: '50vh' }"
                     @change="handleTableChange"
                     :row-selection="rowSelection"
                 />
@@ -174,7 +174,7 @@ const handleBulkDelete = async () => {
                 fetchProducts();
             } catch (error) {
                 console.error("Error:", error);
-                message.error("Failed to delete selected products");
+                message.error(error.response?.data?.message ||"Failed to delete selected products");
             } finally {
                 isLoading.value = false;
             }
@@ -213,7 +213,7 @@ const exportData = async () => {
         message.success("Export file CSV success!");
     } catch (error) {
         console.error("Error:", error);
-        message.error("Failed to export product");
+        message.error(error.response?.data?.message ||"Failed to export product");
     } finally {
         isLoading.value = false;
     }
@@ -257,7 +257,7 @@ const handleImportConfirm = async () => {
         fetchProducts();
     } catch (error) {
         console.error("Error:", error);
-        message.error("Failed to import product");
+        message.error(error.response?.data?.message ||"Failed to import product");
     } finally {
         isLoading.value = false;
     }
@@ -284,7 +284,7 @@ const handleDelete = async (id) => {
         message.success("Product deleted successfully!");
     } catch (error) {
         console.error("Error:", error);
-        message.error("Failed to delete product");
+        message.error(error.response?.data?.message ||"Failed to delete product");
     } finally {
         isLoading.value = false;
     }
@@ -336,7 +336,7 @@ const handleAddProduct = async (data) => {
         fetchProducts();
     } catch (error) {
         console.error("Error", error);
-        message.error("Failed to add product");
+        message.error(error.response?.data?.message ||"Failed to add product");
     }
 };
 
@@ -372,7 +372,7 @@ const handleUpdateProduct = async (data, idDeleteList, id) => {
         fetchProducts();
     } catch (error) {
         console.error("Error", error);
-        message.error("Failed to update product");
+        message.error(error.response?.data?.message ||"Failed to update product");
     }
 };
 

@@ -51,12 +51,22 @@ class OrderController extends Controller
     public function updateState(Request $request)
     {
         try {
-            $result = $this->orderRepository->updateOrder($request);
+            $id = $request->id;
+            $state = $request->state;
 
-            return response()->json($result, 200);
+            $order = $this->orderRepository->updateOrder($id, $state);
+
+            return response()->json([
+                'status' => 200,
+                'message' => 'Success',
+                'order' => $order
+            ], 200);
         } catch (Exception $e) {
             Log::error('updateState Error: ' . $e);
-            return response()->json(['error' => 'The server is invalid.'], 500);
+            return response()->json([
+                'status' => $e->getCode() ?: 500,
+                'message' => $e->getMessage()
+            ], $e->getCode() ?: 500);
         }
     }
 }

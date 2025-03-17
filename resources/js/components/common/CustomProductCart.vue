@@ -5,6 +5,7 @@
         alt="product"
         :src="data.images[0] ? '/storage/' + data.images[0].path : 'https://gw.alipayobjects.com/zos/rmsportal/JiqGstEfoWAOHiTxclqi.png'"
         class="product-image"
+        @click="goDetails"
       />
     </template>
     <a-card-meta :title="data.name" :description="formatPrice(data.price)" class="card-meta">
@@ -13,7 +14,6 @@
       </template>
     </a-card-meta>
     <template #actions>
-      <ExclamationCircleOutlined class="action-icon" />
       <ShoppingCartOutlined class="action-icon" @click="showAddModal" />
       <a-button type="primary" @click="showBuyModal" class="buy-button">Mua ngay</a-button>
     </template>
@@ -36,6 +36,7 @@ import { ShoppingCartOutlined, ExclamationCircleOutlined, EllipsisOutlined } fro
 import PurchaseProductModal from '@/components/modals/PurchaseProductModal.vue';
 import { ref } from 'vue';
 import AddCardModal from '@/components/modals/AddCardModal.vue';
+import { useRouter } from 'vue-router';
 
 const props = defineProps({
   data: {
@@ -46,6 +47,7 @@ const props = defineProps({
 
 const isBuyModalVisible = ref(false);
 const isAddModalVisible = ref(false);
+const router = useRouter();
 
 const formatPrice = (price) => {
   if (!price) return "0đ"; 
@@ -58,6 +60,10 @@ const showBuyModal = () => {
 
 const showAddModal = () => {
   isAddModalVisible.value = true;
+};
+
+const goDetails = () => {
+  router.push(`/product/${props.data.id}`);
 };
 
 </script>

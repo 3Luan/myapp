@@ -17,6 +17,8 @@ class AuthRepository implements AuthRepositoryInterface
   public function login(Request $request)
   {
     try {
+      DB::beginTransaction();
+
       $user = User::with('role')->where('email', $request->input('email'))->first();
 
       if (! $user || ! Hash::check($request['password'], $user->password)) {
@@ -28,6 +30,7 @@ class AuthRepository implements AuthRepositoryInterface
       }
 
       $token = $user->createToken('auth_token')->plainTextToken;
+      DB::commit();
 
       return [
         'message' => 'Login successful',
@@ -36,6 +39,8 @@ class AuthRepository implements AuthRepositoryInterface
         'status' => 200
       ];
     } catch (Exception $e) {
+      DB::rollBack();
+
       return ['message' => $e->getMessage(), 'status' => 500];
     }
   }
@@ -43,11 +48,14 @@ class AuthRepository implements AuthRepositoryInterface
   public function getProfile(Request $request)
   {
     try {
+      DB::beginTransaction();
+
       $user = $request->user()->load('role');
 
       if (!$user) {
         return ['message' => 'Unauthenticated.', 'status' => 401];
       }
+      DB::commit();
 
       return [
         'message' => 'User refreshed successfully',
@@ -55,6 +63,8 @@ class AuthRepository implements AuthRepositoryInterface
         'status' => 200
       ];
     } catch (Exception $e) {
+      DB::rollBack();
+
       return ['message' => $e->getMessage(), 'status' => 500];
     }
   }
@@ -64,6 +74,8 @@ class AuthRepository implements AuthRepositoryInterface
   public function loginAdmin(Request $request)
   {
     try {
+      DB::beginTransaction();
+
       $user = User::with('role')->where('email', $request->input('email'))->first();
 
       if (! $user || ! Hash::check($request['password'], $user->password)) {
@@ -80,6 +92,7 @@ class AuthRepository implements AuthRepositoryInterface
       }
 
       $token = $user->createToken('auth_token')->plainTextToken;
+      DB::commit();
 
       return [
         'message' => 'Login successful',
@@ -88,6 +101,8 @@ class AuthRepository implements AuthRepositoryInterface
         'status' => 200
       ];
     } catch (Exception $e) {
+      DB::rollBack();
+
       return ['message' => $e->getMessage(), 'status' => 500];
     }
   }
@@ -95,11 +110,14 @@ class AuthRepository implements AuthRepositoryInterface
   public function getProfileAdmin(Request $request)
   {
     try {
+      DB::beginTransaction();
+
       $user = $request->user()->load('role');
 
       if (!$user) {
         return ['message' => 'Unauthenticated.', 'status' => 401];
       }
+      DB::commit();
 
       return [
         'message' => 'User refreshed successfully',
@@ -107,6 +125,8 @@ class AuthRepository implements AuthRepositoryInterface
         'status' => 200
       ];
     } catch (Exception $e) {
+      DB::rollBack();
+
       return ['message' => $e->getMessage(), 'status' => 500];
     }
   }

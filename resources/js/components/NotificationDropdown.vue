@@ -80,18 +80,18 @@ const unread_count = ref(0);
 const toast = useToast();
 
 watch(
-    () => store.getters["auth/user"], 
-    (user) => {
-      if (user && user.id) {
-        echo.private(`orders.${user.id}`)
-            .listen('OrderStatusChanged', (e) => {
-                fetchNotifications();
-                toast.success(e.message);
-            });
-      }
-    },
-    { immediate: true }
-  );
+  () => store.getters["auth/user"],
+  (user) => {
+    if (user && user.id) {
+      echo.private(`orders.${user.id}`)
+        .listen('OrderStatusChanged', (e) => {
+          fetchNotifications();
+          toast.success(e.message);
+        });
+    }
+  },
+  { immediate: true }
+);
 
 const fetchNotifications = async () => {
   try {
@@ -102,8 +102,8 @@ const fetchNotifications = async () => {
       order_element: orderElement.value,
       order_type: orderType.value,
     });
-    notifications.value = response.data.notifications.data; 
-    unread_count.value = response.data.unread_count; 
+    notifications.value = [...response.data.notifications.data];
+    unread_count.value = response.data.unread_count;
   } catch (error) {
     console.error("Failed to fetch notifications:", error);
   }
@@ -116,11 +116,10 @@ onMounted(() => {
 const filteredNotifications = computed(() => {
   if (!searchText.value) return notifications.value;
   return notifications.value.filter(notif =>
-    notif.message.toLowerCase().includes(searchText.value.toLowerCase())
+    notif.data.message.toLowerCase().includes(searchText.value.toLowerCase())
   );
 });
 
-// Format timestamp to a readable string
 const formatTime = (timestamp) => {
   const date = new Date(timestamp);
   return date.toLocaleString("en-US", {
@@ -131,26 +130,30 @@ const formatTime = (timestamp) => {
   });
 };
 
-// Mark a single notification as read
 const markAsRead = async (index) => {
   try {
     const notification = filteredNotifications.value[index];
     await notificationApi.readNotification(notification.id);
     isDropdownVisible.value = false;
+    router.push("/history");
+    await fetchNotifications();
   } catch (error) {
     console.error("Error marking notification as read:", error);
   }
 };
 
-
-// Mark all notifications as read
-const markAllAsRead = () => {
-  notifications.value.forEach(notif => (notif.read = true));
+const markAllAsRead = async () => {
+  try {
+    await notificationApi.readAllNotifications();
+    notifications.value.forEach(notif => (notif.read_at = new Date().toISOString()));
+    unread_count.value = 0;
+    await fetchNotifications();
+  } catch (error) {
+    console.error("Error marking all notifications as read:", error);
+  }
 };
 
-// Navigate to a full notifications page
 const viewAllNotifications = () => {
-  router.push("/notifications");
   isDropdownVisible.value = false;
 };
 
@@ -173,7 +176,6 @@ const handleVisibleChange = (visible) => {
 
 .nav-item:hover {
   background-color: rgba(255, 255, 255, 0.15);
-  color: #40c4ff;
   transform: translateY(-2px);
 }
 
@@ -188,15 +190,10 @@ const handleVisibleChange = (visible) => {
   transition: all 0.3s ease;
 }
 
-.notification-icon:hover .nav-icon {
-  color: #40c4ff; /* Blue color on hover */
-}
-
 .notification-icon:hover {
   transform: scale(1.1);
 }
 
-/* Badge */
 :deep(.ant-badge-count) {
   box-shadow: 0 0 0 2px #fff;
   font-size: 12px;
@@ -205,7 +202,6 @@ const handleVisibleChange = (visible) => {
   min-width: 18px;
 }
 
-/* Dropdown Container */
 .notification-dropdown {
   background: #fff;
   border-radius: 8px;
@@ -213,7 +209,6 @@ const handleVisibleChange = (visible) => {
   width: 320px;
 }
 
-/* Header */
 .dropdown-header {
   display: flex;
   justify-content: space-between;
@@ -237,7 +232,6 @@ const handleVisibleChange = (visible) => {
   color: #40a9ff;
 }
 
-/* Search Input */
 .search-wrapper {
   padding: 10px 16px;
   border-bottom: 1px solid #e8e8e8;
@@ -248,7 +242,6 @@ const handleVisibleChange = (visible) => {
   font-size: 13px;
 }
 
-/* Notification Menu */
 .notification-menu {
   max-height: 250px;
   overflow-y: auto;
@@ -264,6 +257,7 @@ const handleVisibleChange = (visible) => {
 .message {
   font-size: 14px;
   font-weight: 500;
+  color: #333;
 }
 
 .time {
@@ -277,6 +271,14 @@ const handleVisibleChange = (visible) => {
 
 .unread .message {
   font-weight: 600;
+  color: #1890ff;
+}
+
+.notification-menu .ant-menu-item:hover {
+  background-color: #f5f5f5;
+}
+
+.notification-menu .ant-menu-item:hover .message {
   color: #1890ff;
 }
 

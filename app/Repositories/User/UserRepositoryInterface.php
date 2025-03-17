@@ -32,5 +32,13 @@ interface UserRepositoryInterface extends RepositoryInterface
    * update user
    * @return mixed
    */
-  public function updateUser(Request $request, User $user);
+  public function updateUser(Request $request,  $id);
+
+
+  /**
+   * Summary of getUserById
+   * @param \Illuminate\Http\Request $request
+   * @return void
+   */
+  public function getUserById(string $id);
 }

@@ -35,12 +35,15 @@ class ProductRepository extends BaseRepository implements ProductRepositoryInter
   public function getProductList(Request $request): JsonResponse|array
   {
     try {
+      DB::beginTransaction();
       $query = Product::with('images');
 
       $result = $this->paginateQuery($query, $request->all(), 'product');
 
+      DB::commit();
       return response()->json($result);
     } catch (Exception $e) {
+      DB::rollBack();
       return ['message' => $e->getMessage(), 'status' => 500];
     }
   }

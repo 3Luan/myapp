@@ -1,37 +1,50 @@
 <template>
   <div class="home-container" @scroll="handleScroll">
     <header class="header">
-      <a-input-search
-        v-model:value="searchText"
-        placeholder="Search..."
-        enter-button="Search"
-        @search="fetchProducts(true, true)"
-        class="search-input"
-      />
+      <div class="search-bar">
+        <a-input-search
+          v-model:value="searchText"
+          placeholder="Tìm kiếm sản phẩm..."
+          enter-button="Tìm"
+          @search="fetchProducts(true, true)"
+          class="search-input"
+        />
+        <a-select 
+          v-model:value="sortBy" 
+          @change="fetchProducts(true, true)" 
+          class="filter-select"
+          dropdownClassName="custom-dropdown"
+        >
+          <a-select-option value="default">Mặc định</a-select-option>
+          <a-select-option value="price-asc">Giá: Thấp đến Cao</a-select-option>
+          <a-select-option value="price-desc">Giá: Cao đến Thấp</a-select-option>
+        </a-select>
+      </div>
     </header>
 
-    <section class="filter-section">
-      <a-select v-model:value="sortBy" @change="fetchProducts(true, true)" class="filter-select">
-        <a-select-option value="default">Default</a-select-option>
-        <a-select-option value="price-asc">Price: Low to High</a-select-option>
-        <a-select-option value="price-desc">Price: High to Low</a-select-option>
-      </a-select>
-    </section>
-
-    <a-spin :spinning="isLoading">
+    <a-spin :spinning="isLoading" tip="Đang tải...">
       <section class="products-grid">
-        <CustomCart v-for="product in products" :key="product.id" :data="product" />
+        <CustomCart 
+          v-for="product in products" 
+          :key="product.id" 
+          :data="product" 
+          class="product-card"
+        />
       </section>
-      <div v-if="isLoadingMore" class="loading-more">Loading...</div>
+      <div v-if="isLoadingMore" class="loading-more">
+        <a-spin size="small" /> Đang tải thêm...
+      </div>
     </a-spin>
   </div>
 </template>
 
 <script setup>
+
 import { ref, onMounted, watch } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
 import CustomCart from '@/components/common/CustomProductCart.vue';
 import productApi from '@/api/product';
+import { message } from 'ant-design-vue';
 
 const router = useRouter();
 const route = useRoute();
@@ -81,6 +94,7 @@ const fetchProducts = async (reset = false, updateUrl = false) => {
     }
   } catch (error) {
     console.error('Error:', error);
+    message.error(error.response?.data?.message || "error.");
   } finally {
     isLoading.value = false;
     isLoadingMore.value = false;
@@ -97,36 +111,133 @@ const handleScroll = (event) => {
 watch(() => route.query, () => fetchProducts(true), { deep: true });
 
 onMounted(() => fetchProducts(true));
+
 </script>
 
 <style scoped>
 .home-container {
-  max-width: 1300px;
-  margin: auto;
-  padding: 30px;
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 40px 20px;
   max-height: 90vh;
   overflow-y: auto;
+  border-radius: 12px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
 }
 
-.header, .filter-section {
+.header {
+  padding: 0 20px;
+  margin-bottom: 30px;
+}
+
+.search-bar {
   display: flex;
-  justify-content: center;
-  margin-bottom: 20px;
+  gap: 15px;
+  max-width: 700px;
+  margin: 0 auto;
+  align-items: center;
+  background: #ffffff;
+  padding: 15px;
+  border-radius: 40px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
 }
 
-.search-input, .filter-select {
-  width: 100%;
-  max-width: 300px;
+.search-input {
+  flex: 1;
+  border: none;
+}
+
+.search-input :deep(.ant-input) {
+  border: none;
+  background: transparent;
+  font-size: 15px;
+}
+
+.search-input :deep(.ant-btn) {
+  border-radius: 20px;
+  background: #1890ff;
+  border: none;
+  height: 36px;
+}
+
+.filter-select {
+  width: 200px;
+  font-size: 15px;
+}
+
+:deep(.ant-select-selector) {
+  border-radius: 20px !important;
+  height: 36px !important;
+  display: flex;
+  align-items: center;
+  border: none !important;
+  background: #f0f2f5 !important;
 }
 
 .products-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-  gap: 20px;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 25px;
+  padding: 0 20px;
+}
+
+.product-card {
+  transition: transform 0.3s ease;
+}
+
+.product-card:hover {
+  transform: translateY(-5px);
 }
 
 .loading-more {
   text-align: center;
-  padding: 20px;
+  padding: 25px;
+  color: #666;
+  font-size: 14px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 10px;
+}
+
+/* Animation cho loading */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.products-grid {
+  animation: fadeIn 0.5s ease-in;
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+  .search-bar {
+    flex-direction: column;
+    padding: 10px;
+  }
+  
+  .filter-select {
+    width: 100%;
+  }
+  
+  .products-grid {
+    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+    gap: 15px;
+  }
+}
+
+@media (max-width: 480px) {
+  .home-container {
+    padding: 20px 10px;
+  }
+  
+  .products-grid {
+    grid-template-columns: 1fr;
+  }
 }
 </style>

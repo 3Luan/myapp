@@ -1,28 +1,35 @@
 <template>
-    <a-modal
-      :open="open"
-      title="Order details"
-      width="600px"
-      :footer="null"
-      @cancel="handleClose"
-    >
-      <div v-if="selectedOrder">
-        <a-descriptions :column="1" bordered>
-          <a-descriptions-item label="ID">{{ selectedOrder.id }}</a-descriptions-item>
-          <a-descriptions-item label="Order date">{{ formatDate(selectedOrder.created_at) }}</a-descriptions-item>
-          <a-descriptions-item label="Total amount">{{ formatPrice(selectedOrder.price) }}</a-descriptions-item>
-          <a-descriptions-item label="State">
-            <a-tag :color="getStateColor(selectedOrder.state)">
-              {{ selectedOrder.state }}
-            </a-tag>
-          </a-descriptions-item>
-        </a-descriptions>
-  
-        <h3>Product list</h3>
-        <a-table :columns="itemColumns" :data-source="selectedOrder.order_details" :pagination="false" row-key="id" />
+  <a-modal
+    :open="open"
+    title="Order details"
+    width="600px"
+    :footer="null"
+    @cancel="handleClose"
+  >
+    <div v-if="selectedOrder">
+      <a-descriptions :column="1" bordered>
+        <a-descriptions-item label="ID">{{ selectedOrder.id }}</a-descriptions-item>
+        <a-descriptions-item label="Order date">{{ formatDate(selectedOrder.created_at) }}</a-descriptions-item>
+        <a-descriptions-item label="Total amount">{{ formatPrice(selectedOrder.price) }}</a-descriptions-item>
+        <a-descriptions-item label="State">
+          <a-tag :color="getStateColor(selectedOrder.state)">
+            {{ selectedOrder.state }}
+          </a-tag>
+        </a-descriptions-item>
+      </a-descriptions>
+
+      <h3>Product list</h3>
+      <a-table :columns="itemColumns" :data-source="selectedOrder.order_details" :pagination="false" row-key="id" />
+
+      <div class="text-right mt-3">
+        <a-button type="primary" @click="exportInvoice" :loading="loading">
+          Xuất hóa đơn
+        </a-button>
       </div>
-    </a-modal>
-  </template>
+    </div>
+  </a-modal>
+</template>
+
   
   <script setup>
   import { defineProps, defineEmits } from 'vue';

@@ -35,13 +35,16 @@ class CartRepository extends BaseRepository implements CartRepositoryInterface
   public function getCartList(Request $request): JsonResponse|array
   {
     try {
+      DB::beginTransaction();
       $query = Cart::with(['product', 'product.images'])
         ->where('user_id', auth()->id());
 
       $result = $this->paginateQuery($query, $request->all(), 'cart');
+      DB::commit();
 
       return response()->json($result);
     } catch (Exception $e) {
+      DB::rollBack();
       return ['message' => $e->getMessage(), 'status' => 500];
     }
   }
@@ -53,6 +56,7 @@ class CartRepository extends BaseRepository implements CartRepositoryInterface
   public function createCart(Request $request)
   {
     try {
+      DB::beginTransaction();
       $cart = Cart::where('user_id', auth()->id())
         ->where('product_id', $request->product_id)
         ->first();
@@ -67,9 +71,11 @@ class CartRepository extends BaseRepository implements CartRepositoryInterface
           'count' => $request->count
         ]);
       }
+      DB::commit();
 
       return $cart->fresh()->load(['product.images']);
     } catch (Exception $e) {
+      DB::rollBack();
       Log::error('createCart: ' . $e->getMessage());
       throw new Exception('Failed to create cart');
     }
@@ -82,11 +88,14 @@ class CartRepository extends BaseRepository implements CartRepositoryInterface
   public function updateCart(Request $request)
   {
     try {
+      DB::beginTransaction();
       $cartItem = Cart::findOrFail($request->cart_id);
       $cartItem->update(['count' => $request->count]);
+      DB::commit();
 
       return $cartItem;
     } catch (Exception $e) {
+      DB::rollBack();
       Log::error('updateCart: ' . $e->getMessage());
       throw new Exception('Failed to update cart');
     }
@@ -99,6 +108,7 @@ class CartRepository extends BaseRepository implements CartRepositoryInterface
   public function deleteCart(Request $request)
   {
     try {
+      DB::beginTransaction();
       $cartItem = Cart::where('id', $request->cart_id)
         ->where('user_id', auth()->id())
         ->first();
@@ -108,9 +118,11 @@ class CartRepository extends BaseRepository implements CartRepositoryInterface
       }
 
       $cartItem->delete();
+      DB::commit();
 
       return $cartItem;
     } catch (Exception $e) {
+      DB::rollBack();
       Log::error('deleteCart: ' . $e->getMessage());
       throw new Exception('Failed to delete cart');
     }
@@ -119,6 +131,7 @@ class CartRepository extends BaseRepository implements CartRepositoryInterface
   public function updateState(Request $request)
   {
     try {
+      DB::beginTransaction();
       $id = $request->input('id');
       $order = Order::where('user_id', auth()->id())->find($id);
 
@@ -134,9 +147,11 @@ class CartRepository extends BaseRepository implements CartRepositoryInterface
 
       $order->state = 'canceled';
       $order->save();
+      DB::commit();
 
       return $order;
     } catch (Exception $e) {
+      DB::rollBack();
       Log::error('updateState: ' . $e->getMessage());
       throw new Exception('Failed to update state');
     }

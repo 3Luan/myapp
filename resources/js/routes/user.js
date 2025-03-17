@@ -21,6 +21,12 @@ const admin = [
                 component: () => import("@/pages/cart/index.vue"),
                 meta: { requiresAuth: true, isAdmin: false },
             },
+            {
+                path: "/product/:id",
+                name: "product",
+                component: () => import("@/pages/product/index.vue"),
+                meta: { requiresAuth: true, isAdmin: false },
+            },
         ]
     },
     {

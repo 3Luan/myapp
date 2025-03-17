@@ -8,10 +8,16 @@ class UserApi {
     getUserById = (id) => {
         return apiAdmin.get(`/user/${id}`);
     }
+
+    update = (formData, id) => {
+        return apiAdmin.post(`/user/${id}`, formData, {
+            headers: {
+                "Content-Type": "multipart/form-data",
+            },
+        });
+    }
 }
 
 const userApi = new UserApi();
 
 export default userApi;
-
-
