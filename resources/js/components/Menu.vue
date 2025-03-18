@@ -17,6 +17,10 @@
                 <router-link :to="{ name: 'admin-orders' }" />
                 Orders
             </a-menu-item>
+            <a-menu-item key="admin-discounts">
+                <router-link :to="{ name: 'admin-discounts' }" />
+                Discounts
+            </a-menu-item>
         </a-menu>
     </div>
 </template>

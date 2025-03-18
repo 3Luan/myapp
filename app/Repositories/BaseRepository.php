@@ -152,6 +152,10 @@ abstract class BaseRepository implements RepositoryInterface
                 'searchable' => ['id'],
                 'sortable'   => ['id', 'created_at'],
             ],
+            'discount' => [
+                'searchable' => ['name', 'percent'],
+                'sortable'   => ['id', 'created_at', "start_date", "end_date"],
+            ],
         ];
 
         // Search

@@ -36,7 +36,8 @@ class ProductRepository extends BaseRepository implements ProductRepositoryInter
   {
     try {
       DB::beginTransaction();
-      $query = Product::with('images');
+      // $query = Product::with('images');
+      $query = Product::with(['images', 'discounts']);
 
       $result = $this->paginateQuery($query, $request->all(), 'product');
 

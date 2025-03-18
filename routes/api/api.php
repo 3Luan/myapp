@@ -11,3 +11,4 @@ require base_path('routes/api/order.php');
 require base_path('routes/api/user.php');
 require base_path('routes/api/cart.php');
 require base_path('routes/api/notification.php');
+require base_path('routes/api/discount.php');

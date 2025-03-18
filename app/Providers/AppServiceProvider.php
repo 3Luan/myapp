@@ -18,6 +18,8 @@ use App\Policies\ProductPolicy;
 use App\Policies\UserPolicy;
 use App\Repositories\Cart\CartRepository;
 use App\Repositories\Cart\CartRepositoryInterface;
+use App\Repositories\Discount\DiscountRepository;
+use App\Repositories\Discount\DiscountRepositoryInterface;
 use App\Repositories\Notification\NotificationRepository;
 use App\Repositories\Notification\NotificationRepositoryInterface;
 use App\Repositories\Order\OrderRepository;
@@ -39,6 +41,7 @@ class AppServiceProvider extends ServiceProvider
         $this->app->bind(RoleRepositoryInterface::class, RoleRepository::class);
         $this->app->bind(CartRepositoryInterface::class, CartRepository::class);
         $this->app->bind(NotificationRepositoryInterface::class, NotificationRepository::class);
+        $this->app->bind(DiscountRepositoryInterface::class, DiscountRepository::class);
     }
 
     protected $policies = [

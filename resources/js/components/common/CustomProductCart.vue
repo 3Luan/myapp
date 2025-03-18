@@ -1,16 +1,25 @@
 <template>
   <a-card hoverable class="product-card">
     <template #cover>
-      <img
-        alt="product"
-        :src="data.images[0] ? '/storage/' + data.images[0].path : 'https://gw.alipayobjects.com/zos/rmsportal/JiqGstEfoWAOHiTxclqi.png'"
-        class="product-image"
-        @click="goDetails"
-      />
+      <div class="image-container">
+        <img
+          alt="product"
+          :src="data.images[0] ? '/storage/' + data.images[0].path : 'https://gw.alipayobjects.com/zos/rmsportal/JiqGstEfoWAOHiTxclqi.png'"
+          class="product-image"
+          @click="goDetails"
+        />
+        <a-tag v-if="activeDiscount" color="red" class="discount-badge">
+          -{{ parseInt(activeDiscount.percent) }}%
+        </a-tag>
+      </div>
     </template>
-    <a-card-meta :title="data.name" :description="formatPrice(data.price)" class="card-meta">
+    <a-card-meta :title="data.name" class="card-meta">
       <template #description>
-        <p class="price-text">{{ formatPrice(data.price) }}</p>
+        <div v-if="activeDiscount" class="price-container">
+          <p class="original-price">{{ formatPrice(data.price) }}</p>
+          <p class="discounted-price">{{ formatPrice(calculateDiscountedPrice(data.price, activeDiscount.percent)) }}</p>
+        </div>
+        <p v-else class="price-text">{{ formatPrice(data.price) }}</p>
       </template>
     </a-card-meta>
     <template #actions>
@@ -32,9 +41,9 @@
 </template>
 
 <script setup>
-import { ShoppingCartOutlined, ExclamationCircleOutlined, EllipsisOutlined } from '@ant-design/icons-vue';
+import { ShoppingCartOutlined } from '@ant-design/icons-vue';
 import PurchaseProductModal from '@/components/modals/PurchaseProductModal.vue';
-import { ref } from 'vue';
+import { ref, computed } from 'vue';
 import AddCardModal from '@/components/modals/AddCardModal.vue';
 import { useRouter } from 'vue-router';
 
@@ -49,9 +58,37 @@ const isBuyModalVisible = ref(false);
 const isAddModalVisible = ref(false);
 const router = useRouter();
 
+const activeDiscount = computed(() => {
+  if (!props.data.discounts || props.data.discounts.length === 0) return null;
+
+  const now = new Date();
+
+  console.log(props.data.discounts);
+
+  const validDiscounts = props.data.discounts.filter(discount => {
+    const start = new Date(discount.start_date);
+    const end = new Date(discount.end_date);
+    return start <= now && now <= end;
+  });
+
+  if (validDiscounts.length > 0) {
+    return validDiscounts.reduce((maxDiscount, currentDiscount) =>
+      currentDiscount.percent > maxDiscount.percent ? currentDiscount : maxDiscount
+    );
+  }
+
+  return props.data.discounts[0];
+});
+
+
 const formatPrice = (price) => {
-  if (!price) return "0đ"; 
+  if (!price) return "0đ";
   return new Intl.NumberFormat("vi-VN", { style: "currency", currency: "VND" }).format(price);
+};
+
+const calculateDiscountedPrice = (price, percent) => {
+  const discountPercent = parseFloat(percent) / 100;
+  return price * (1 - discountPercent);
 };
 
 const showBuyModal = () => {
@@ -65,7 +102,6 @@ const showAddModal = () => {
 const goDetails = () => {
   router.push(`/product/${props.data.id}`);
 };
-
 </script>
 
 <style scoped>
@@ -81,6 +117,10 @@ const goDetails = () => {
   box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
 }
 
+.image-container {
+  position: relative;
+}
+
 .product-image {
   width: 100%;
   height: 220px;
@@ -92,11 +132,39 @@ const goDetails = () => {
   transform: scale(1.1);
 }
 
+.discount-badge {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  font-weight: bold;
+  font-size: 14px;
+  padding: 2px 8px;
+}
+
 .card-meta {
   padding: 15px;
 }
 
+.price-container {
+  display: flex;
+  flex-direction: column;
+}
+
 .price-text {
+  font-size: 1.2rem;
+  font-weight: 600;
+  color: #ff4d4f;
+  margin: 0;
+}
+
+.original-price {
+  font-size: 1rem;
+  color: #999;
+  text-decoration: line-through;
+  margin: 0;
+}
+
+.discounted-price {
   font-size: 1.2rem;
   font-weight: 600;
   color: #ff4d4f;
